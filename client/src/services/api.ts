@@ -1,6 +1,6 @@
 import type { AnalysisResult, ApiResponse } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export const analyzeImage = async (
   imageFile: File,
