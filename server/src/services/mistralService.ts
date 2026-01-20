@@ -36,44 +36,160 @@ export const analyzeImageService = async (base64Image: string) => {
     //             "ingredients_detected": ["string"]
     //         }
     //     `;
-    const prompt = `Tu es un expert en nutrition et sécurité alimentaire. Analyse cette image d'étiquette alimentaire.
+    //     const prompt = `Tu es un expert en nutrition et sécurité alimentaire. Analyse cette image d'étiquette alimentaire.
 
-INSTRUCTIONS STRICTES :
-1. Lis attentivement TOUT le texte visible sur l'étiquette
-2. Extrais la liste complète des ingrédients
-3. Pour CHAQUE ingrédient, fournis :
-   - Le nom exact
-   - La catégorie (allergen/preservative/additive/irritant/beneficial/other)
-   - Le niveau de risque (none/low/medium/high)
-   - Une explication claire (1-2 phrases)
+    // INSTRUCTIONS STRICTES :
+    // 1. Lis attentivement TOUT le texte visible sur l'étiquette
+    // 2. Extrais la liste complète des ingrédients
+    // 3. Pour CHAQUE ingrédient, fournis :
+    //    - Le nom exact
+    //    - La catégorie (allergen/preservative/additive/irritant/beneficial/other)
+    //    - Le niveau de risque (none/low/medium/high)
+    //    - Une explication claire (1-2 phrases)
 
-4. Calcule un score santé réaliste (0-100) basé sur :
-   - Présence d'additifs : -5 à -20 points
-   - Allergènes : -10 à -30 points
-   - Sucres/graisses : -5 à -15 points
-   - Ingrédients naturels : +5 à +20 points
+    // 4. Calcule un score santé réaliste (0-100) basé sur :
+    //    - Présence d'additifs : -5 à -20 points
+    //    - Allergènes : -10 à -30 points
+    //    - Sucres/graisses : -5 à -15 points
+    //    - Ingrédients naturels : +5 à +20 points
 
-5. Grade basé sur le score : A(90-100), B(75-89), C(60-74), D(40-59), E(0-39)
+    // 5. Grade basé sur le score : A(90-100), B(75-89), C(60-74), D(40-59), E(0-39)
 
-RÉPONDS UNIQUEMENT AVEC CE JSON (sans markdown, sans \`\`\`) :
+    // RÉPONDS UNIQUEMENT AVEC CE JSON (sans markdown, sans \`\`\`) :
+    // {
+    //   "extractedText": "Tous les ingrédients lus sur l'étiquette",
+    //   "ingredients": [
+    //     {
+    //       "name": "Nom de l'ingrédient",
+    //       "category": "allergen",
+    //       "explanation": "Explication détaillée",
+    //       "riskLevel": "high"
+    //     }
+    //   ],
+    //   "score": 75,
+    //   "grade": "B",
+    //   "positives": ["Point positif 1", "Point positif 2"],
+    //   "warnings": ["Avertissement 1", "Avertissement 2"],
+    //   "recommendations": ["Recommandation 1", "Recommandation 2"]
+    // }`;
+
+    // console.log("🤖 Envoi à Mistral AI...");
+    const prompt = `Tu es un expert en nutrition certifié, formé aux standards de l'OMS, de l'EFSA et du Nutri-Score. Analyse cette étiquette alimentaire avec RIGUEUR et OBJECTIVITÉ.
+
+📋 MÉTHODOLOGIE D'ANALYSE (inspirée de Yuka, Open Food Facts, ANSES) :
+
+1️⃣ EXTRACTION DES DONNÉES
+- Lis TOUT le texte visible sur l'étiquette
+- Identifie TOUS les ingrédients dans l'ordre de la liste
+- Note les additifs avec leur code E (ex: E330, E621)
+- Repère les allergènes majeurs (gluten, lactose, fruits à coque, etc.)
+
+2️⃣ SYSTÈME DE NOTATION STRICT (0-100)
+
+DÉDUCTIONS IMPORTANTES :
+🔴 Additifs controversés (E621, E330, E951, colorants azoïques) : -8 à -15 points CHACUN
+🔴 Huile de palme / graisses hydrogénées : -12 points
+🔴 Sucres ajoutés >10g/100g : -15 points | >15g/100g : -25 points | >25g/100g : -35 points
+🔴 Sel >1.5g/100g : -10 points | >2g/100g : -20 points
+🔴 Allergènes majeurs (gluten, lactose, arachides) : -5 points chacun
+🔴 Édulcorants artificiels (aspartame, acésulfame-K) : -10 points chacun
+🔴 Sirop de glucose-fructose : -18 points
+🔴 Arômes artificiels : -8 points
+🔴 Plus de 5 additifs au total : -15 points supplémentaires
+
+BONUS POSITIFS :
+🟢 Bio certifié : +15 points
+🟢 Sans additifs : +10 points
+🟢 Fibres >5g/100g : +8 points
+🟢 Protéines >10g/100g : +5 points
+🟢 Ingrédients 100% naturels : +12 points
+🟢 Faible en sel (<0.3g/100g) : +5 points
+
+3️⃣ GRADING RIGOUREUX (type Nutri-Score/Yuka)
+- A (90-100) : EXCELLENT - Produit sain, recommandé
+- B (75-89)  : BON - Qualité correcte, consommation modérée OK
+- C (50-74)  : MOYEN - Attention aux excès, limiter la fréquence
+- D (25-49)  : MÉDIOCRE - À éviter régulièrement, risques santé
+- E (0-24)   : MAUVAIS - Déconseillé, nombreux additifs/sucres/sel
+
+4️⃣ CATÉGORISATION DES INGRÉDIENTS
+
+Pour CHAQUE ingrédient détecté, précise :
+- name: Nom exact tel qu'écrit sur l'étiquette
+- category: 
+  * "ultra_processed" (sirop glucose-fructose, maltodextrine, protéines hydrolysées)
+  * "additive_harmful" (E621, E951, E150, colorants azoïques)
+  * "additive_safe" (E330 citrate, E440 pectine)
+  * "allergen_major" (gluten, lait, œufs, arachides, soja, fruits à coque)
+  * "allergen_minor" (sulfites, céleri, moutarde)
+  * "sugar_added" (sucre, sirop, dextrose, fructose)
+  * "fat_saturated" (huile palme, graisse hydrogénée, beurre)
+  * "preservative" (E200-E299, benzoate, sorbate)
+  * "sweetener_artificial" (aspartame, acésulfame-K, sucralose)
+  * "natural" (fruits, légumes, céréales complètes)
+  * "beneficial" (fibres, protéines, vitamines, minéraux)
+
+- riskLevel:
+  * "critical" : Danger santé (E621, huile palme, >30g sucre/100g)
+  * "high" : Risque important (additifs controversés, >20g sucre/100g)
+  * "medium" : Attention requise (>10g sucre/100g, additifs courants)
+  * "low" : Risque faible (additifs naturels, faible dose)
+  * "none" : Aucun risque (ingrédients naturels)
+
+- explanation: Explication CONCRÈTE et PÉDAGOGIQUE
+  * Mentionne l'impact santé réel (diabète, hypertension, allergies)
+  * Cite les recommandations OMS si pertinent
+  * Évite le jargon, sois accessible au grand public
+
+5️⃣ VERDICT ET RECOMMANDATIONS
+
+positives: Liste 2-4 points forts CONCRETS (si existants)
+warnings: Liste TOUS les risques santé identifiés
+recommendations: Conseils pratiques et alternatifs
+
+⚠️ RÈGLES CRITIQUES :
+- Un produit avec >20g sucre/100g NE PEUT PAS dépasser 50/100
+- Un produit avec >3 additifs controversés NE PEUT PAS dépasser 40/100
+- Un produit ultra-transformé (>5 additifs) démarre à 60/100 MAX
+- Huile de palme ou graisses hydrogénées = MAX 45/100
+- Présence de E621 (glutamate) = MAX 35/100
+
+📤 RÉPONDS UNIQUEMENT AVEC CE JSON (sans markdown, sans \`\`\`) :
+
 {
-  "extractedText": "Tous les ingrédients lus sur l'étiquette",
+  "extractedText": "Liste complète des ingrédients lus sur l'étiquette",
   "ingredients": [
     {
-      "name": "Nom de l'ingrédient",
-      "category": "allergen",
-      "explanation": "Explication détaillée",
+      "name": "Nom exact de l'ingrédient",
+      "category": "ultra_processed",
+      "explanation": "Impact santé concret et recommandations OMS",
       "riskLevel": "high"
     }
   ],
-  "score": 75,
-  "grade": "B",
-  "positives": ["Point positif 1", "Point positif 2"],
-  "warnings": ["Avertissement 1", "Avertissement 2"],
-  "recommendations": ["Recommandation 1", "Recommandation 2"]
-}`;
+  "score": 25,
+  "grade": "D",
+  "positives": ["Point positif concret 1", "Point positif concret 2"],
+  "warnings": [
+    "⚠️ Forte teneur en sucres ajoutés (25g/100g) - Risque diabète type 2",
+    "⚠️ Présence de E621 (glutamate monosodique) - Additif controversé"
+  ],
+  "recommendations": [
+    "Limiter à 1 portion par semaine maximum",
+    "Alternative : Café noir sans sucre ou café soluble bio sans additifs",
+    "Personnes diabétiques : DÉCONSEILLÉ"
+  ]
+}
 
-    console.log("🤖 Envoi à Mistral AI...");
+💡 EXEMPLES DE NOTATION :
+- Nescafé café soluble sucré (>20g sucre, additifs) : 25-35/100 (Grade D/E)
+- Nutella (huile palme, >50g sucre) : 15-25/100 (Grade E)
+- Coca-Cola (>10g sucre/100ml, E150, acidifiants) : 10-20/100 (Grade E)
+- Compote sans sucre ajouté : 75-85/100 (Grade B)
+- Fruits frais, légumes : 95-100/100 (Grade A)
+
+Sois IMPLACABLE sur les produits ultra-transformés. La santé publique est en jeu.`;
+
+    console.log("🤖 Envoi à Mistral AI avec prompt renforcé...");
 
     const chatResponse = await client.chat.complete({
       model,
