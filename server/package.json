@@ -4,10 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run dev:tsc & npm run dev:server",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "Express",
+    "TypeScript",
+    "MistralAI",
+    "API",
+    "Server",
+    "Backend",
+    "Cors"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
