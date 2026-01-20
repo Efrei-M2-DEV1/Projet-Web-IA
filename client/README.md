@@ -1,73 +1,113 @@
-# React + TypeScript + Vite
+# Application d'Analyse d'Ingrédients - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application web responsive React pour analyser les ingrédients de produits alimentaires, cosmétiques et d'hygiène via l'intelligence artificielle.
 
-Currently, two official plugins are available:
+## 🚀 Fonctionnalités
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Capture/Upload d'images** : Glisser-déposer ou sélectionner une image d'étiquette produit
+- **Extraction OCR** : Reconnaissance automatique du texte sur l'étiquette
+- **Analyse IA** : Analyse intelligente des ingrédients avec Mistral AI
+- **Résultats détaillés** : 
+  - Note et grade (A à E)
+  - Liste des ingrédients avec explications
+  - Points positifs et points de vigilance
+  - Recommandations personnalisées
+- **Historique local** : Sauvegarde automatique des analyses dans le navigateur
+- **Interface moderne** : Design responsive avec excellente affordance
 
-## React Compiler
+## 🛠️ Technologies
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** avec TypeScript
+- **Vite** pour le build et le développement
+- **Tailwind CSS** pour le styling
+- **LocalStorage** pour l'historique
 
-## Expanding the ESLint configuration
+## 📦 Installation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Installer les dépendances
+npm install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Lancer le serveur de développement
+npm run dev
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Build pour la production
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ⚙️ Configuration
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Créez un fichier `.env` à la racine du dossier `client` :
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_URL=http://localhost:3000
 ```
+
+Par défaut, l'application se connecte à `http://localhost:3000`.
+
+## 🎨 Design et Affordance
+
+L'application a été conçue avec une attention particulière à l'**affordance** :
+
+- **Boutons clairs** : États visuels distincts (hover, active, disabled)
+- **Feedback visuel** : Animations et transitions pour guider l'utilisateur
+- **Hiérarchie visuelle** : Utilisation de couleurs, tailles et espacements pour structurer l'information
+- **Accessibilité** : Contrastes suffisants, textes lisibles, navigation intuitive
+- **Responsive** : Adaptation automatique aux différentes tailles d'écran
+
+## 📱 Structure des composants
+
+```
+src/
+├── components/
+│   ├── ImageUpload.tsx      # Composant d'upload/capture d'image
+│   ├── AnalysisResults.tsx  # Affichage des résultats d'analyse
+│   └── History.tsx          # Historique des analyses
+├── services/
+│   ├── api.ts               # Service API pour communiquer avec le backend
+│   └── history.ts           # Gestion de l'historique local
+├── types/
+│   └── index.ts             # Types TypeScript
+├── App.tsx                  # Composant principal
+└── main.tsx                 # Point d'entrée
+```
+
+## 🔌 Connexion Backend
+
+Le service API (`src/services/api.ts`) est prêt à être connecté au backend. Il envoie une requête POST à `/api/analyze` avec l'image en FormData.
+
+Format de réponse attendu du backend :
+
+```typescript
+{
+  extractedText: string;
+  analysis: {
+    ingredients: Array<{
+      name: string;
+      category: 'allergen' | 'preservative' | 'additive' | 'irritant' | 'beneficial' | 'other';
+      explanation: string;
+      riskLevel: 'low' | 'medium' | 'high' | 'none';
+    }>;
+    score: number; // 0-100
+    grade: 'A' | 'B' | 'C' | 'D' | 'E';
+    summary: {
+      positives: string[];
+      warnings: string[];
+      recommendations: string[];
+    };
+  };
+}
+```
+
+## 📝 Notes
+
+- L'historique est stocké dans le `localStorage` du navigateur
+- Les images sont traitées temporairement et ne sont pas stockées
+- L'application fonctionne entièrement côté client, seule l'analyse nécessite le backend
+
+## 🎯 Prochaines étapes
+
+1. Connecter le frontend au backend une fois celui-ci prêt
+2. Tester l'application avec de vraies images d'étiquettes
+3. Ajuster les styles si nécessaire
+4. Ajouter des fonctionnalités supplémentaires (comparaison de produits, export, etc.)
