@@ -2,12 +2,22 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "dev": "npm run dev:tsc & npm run dev:server",
+    "build": "tsc",
+    "dev": "nodemon src/index.ts",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "Express",
+    "TypeScript",
+    "MistralAI",
+    "API",
+    "Server",
+    "Backend",
+    "Cors"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
