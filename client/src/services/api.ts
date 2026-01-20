@@ -1,22 +1,32 @@
-import type { ApiResponse, AnalysisResult } from '../types';
+import type { AnalysisResult, ApiResponse } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-export const analyzeImage = async (imageFile: File): Promise<AnalysisResult> => {
+export const analyzeImage = async (
+  imageFile: File,
+): Promise<AnalysisResult> => {
   const formData = new FormData();
-  formData.append('image', imageFile);
+  formData.append("image", imageFile);
 
   try {
+    console.log("📤 Envoi de l'image au serveur:", API_BASE_URL);
+
     const response = await fetch(`${API_BASE_URL}/api/analyze`, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
+    console.log("📥 Réponse du serveur:", response.status);
 
     if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error("❌ Erreur serveur:", errorData);
+      throw new Error(
+        `Erreur HTTP: ${response.status} - ${errorData.error || "Erreur inconnue"}`,
+      );
     }
 
     const data: ApiResponse = await response.json();
+    console.log("✅ Données reçues:", data);
 
     // Créer un résultat avec un ID unique
     const result: AnalysisResult = {
@@ -31,7 +41,15 @@ export const analyzeImage = async (imageFile: File): Promise<AnalysisResult> => 
 
     return result;
   } catch (error) {
-    console.error('Erreur lors de l\'analyse:', error);
+    console.error("Erreur lors de l'analyse:", error);
+
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      throw new Error(
+        "Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur " +
+          API_BASE_URL,
+      );
+    }
+
     throw error;
   }
 };
@@ -44,7 +62,7 @@ export const createImagePreview = (file: File): Promise<string> => {
       if (e.target?.result) {
         resolve(e.target.result as string);
       } else {
-        reject(new Error('Impossible de lire le fichier'));
+        reject(new Error("Impossible de lire le fichier"));
       }
     };
     reader.onerror = reject;
