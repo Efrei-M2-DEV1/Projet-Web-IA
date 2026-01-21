@@ -11,8 +11,6 @@ type View = 'upload' | 'results' | 'history';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('upload');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<AnalysisResult[]>([]);

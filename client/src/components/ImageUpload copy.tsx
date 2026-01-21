@@ -11,7 +11,6 @@ export const ImageUpload = ({
   isLoading = false,
 }: ImageUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -68,10 +67,6 @@ export const ImageUpload = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
-
-  const openGallery = () => {
-    fileInputRef.current?.click();
   };
 
   if (preview) {
