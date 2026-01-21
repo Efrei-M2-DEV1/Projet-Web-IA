@@ -149,6 +149,20 @@ MISTRAL_MODEL=pixtral-12b-2409
 4. Générez une nouvelle clé
 5. Copiez-la dans votre fichier `.env`
 
+📌 **Variables disponibles :**
+
+| Variable          | Description                 | Valeur par défaut  | Obligatoire |
+| ----------------- | --------------------------- | ------------------ | ----------- |
+| `PORT`            | Port du serveur Express     | `3000`             | ❌          |
+| `MISTRAL_API_KEY` | Clé d'accès API Mistral AI  | -                  | ✅          |
+| `MISTRAL_MODEL`   | Modèle de vision à utiliser | `pixtral-12b-2409` | ❌          |
+
+⚠️ **Important** :
+
+- La variable `MISTRAL_API_KEY` est **obligatoire** pour que l'analyse fonctionne
+- Ne partagez **jamais** votre clé API publiquement
+- Ajoutez `.env` dans votre `.gitignore`
+
 #### **Frontend (.env.local dans `/client`)**
 
 Créez un fichier `.env.local` dans le dossier `client/` :
@@ -157,6 +171,14 @@ Créez un fichier `.env.local` dans le dossier `client/` :
 # URL du backend (ajustez si nécessaire)
 VITE_API_URL=
 ```
+
+📌 **Variables disponibles :**
+
+| Variable       | Description            | Valeur par défaut       |
+| -------------- | ---------------------- | ----------------------- |
+| `VITE_API_URL` | URL du serveur backend | `http://localhost:3000` |
+
+⚠️ **Important** : Si vous déployez l'application, remplacez par l'URL de production du backend.
 
 ---
 
