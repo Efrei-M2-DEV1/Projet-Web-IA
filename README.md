@@ -155,7 +155,7 @@ Créez un fichier `.env.local` dans le dossier `client/` :
 
 ```env
 # URL du backend (ajustez si nécessaire)
-VITE_API_URL=http://localhost:3000
+VITE_API_URL=
 ```
 
 ---
