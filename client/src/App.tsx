@@ -99,8 +99,6 @@ function App() {
   };
 
   const handleImageSelect = async (file: File, preview: string) => {
-    setSelectedImage(file);
-    setImagePreview(preview);
     setError(null);
     setIsAnalyzing(true);
 
@@ -119,8 +117,6 @@ function App() {
   };
 
   const handleNewAnalysis = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
     setAnalysisResult(null);
     setError(null);
     setCurrentView('upload');
