@@ -98,7 +98,7 @@ function App() {
     setHistory(getHistory());
   };
 
-  const handleImageSelect = async (file: File, preview: string) => {
+  const handleImageSelect = async (file: File) => {
     setError(null);
     setIsAnalyzing(true);
 
