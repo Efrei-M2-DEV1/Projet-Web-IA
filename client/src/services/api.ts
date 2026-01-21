@@ -1,10 +1,13 @@
-import type { AnalysisResult, ApiResponse } from "../types";
+import type { ApiResponse } from "../types";
+import {
+  analyzeProductCompatibility,
+  hasActiveProfile,
+  loadHealthProfile,
+} from "./healthProfile";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
-export const analyzeImage = async (
-  imageFile: File,
-): Promise<AnalysisResult> => {
+export const analyzeImage = async (imageFile: File): Promise<ApiResponse> => {
   const formData = new FormData();
   formData.append("image", imageFile);
 
@@ -29,17 +32,30 @@ export const analyzeImage = async (
     console.log("✅ Données reçues:", data);
 
     // Créer un résultat avec un ID unique
-    const result: AnalysisResult = {
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      extractedText: data.extractedText,
-      ingredients: data.analysis.ingredients,
-      score: data.analysis.score,
-      grade: data.analysis.grade,
-      summary: data.analysis.summary,
-    };
+    // const result: AnalysisResult = {
+    //   id: Date.now().toString(),
+    //   timestamp: Date.now(),
+    //   extractedText: data.extractedText,
+    //   ingredients: data.analysis.ingredients,
+    //   score: data.analysis.score,
+    //   grade: data.analysis.grade,
+    //   summary: data.analysis.summary,
+    // };
+    // ⭐ PERSONNALISATION : Ajouter l'analyse du profil
+    if (hasActiveProfile()) {
+      const profile = loadHealthProfile();
+      const compatibility = analyzeProductCompatibility(
+        data.extractedText || "",
+        data.analysis.ingredients,
+        profile,
+      );
 
-    return result;
+      // Enrichir la réponse avec les données personnalisées
+      data.analysis.personalizedWarnings = compatibility.warnings;
+      data.analysis.suitabilityScore = compatibility.suitabilityScore;
+      data.analysis.profileRecommendation = compatibility.recommendation;
+    }
+    return data;
   } catch (error) {
     console.error("Erreur lors de l'analyse:", error);
 
