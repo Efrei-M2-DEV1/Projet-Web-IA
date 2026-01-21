@@ -38,7 +38,7 @@ jobs:
         working-directory: ./server
         run: npm test
         env:
-          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          MISTRAL_API_KEY: test_key_for_ci
           MISTRAL_MODEL: pixtral-12b-2409
 
       - name: Upload coverage to Codecov
