@@ -1,9 +1,9 @@
 name: CI/CD Backend
 
-on:
+on: 
   push:
-    branches: [main, dev, 'feature/**']
-  pull_request:
+    branches:  [main, dev, 'feature/**']
+  pull_request: 
     branches: [main, dev]
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     name: Tests Backend
     runs-on: ubuntu-latest
     
-    strategy:
+    strategy: 
       matrix:
         node-version: [18.x, 20.x]
 
@@ -22,9 +22,9 @@ jobs:
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version:  ${{ matrix.node-version }}
           cache: 'npm'
-          
+          cache-dependency-path:  server/package-lock.json  # ADD THIS LINE
 
       - name: Install dependencies
         working-directory: ./server
@@ -44,22 +44,22 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          file: ./server/coverage/lcov.info
+          file: ./server/coverage/lcov. info
           flags: backend
           name: backend-coverage
           fail_ci_if_error: false
 
   build-backend:
     name: Build Backend
-    needs: test-backend
+    needs:  test-backend
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    if:  github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name:  Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
@@ -70,20 +70,20 @@ jobs:
         working-directory: ./server
         run: npm ci
 
-      - name: Build
+      - name:  Build
         working-directory: ./server
         run: npm run build
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
-        with:
+        with: 
           name: backend-dist
           path: server/dist
           retention-days: 7
 
   test-frontend:
-    name: Tests Frontend
-    runs-on: ubuntu-latest
+    name:  Tests Frontend
+    runs-on:  ubuntu-latest
     
     strategy:
       matrix:
@@ -93,12 +93,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name:  Setup Node.js ${{ matrix. node-version }}
+        uses:  actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          cache-dependency-path: client/package-lock. json
 
       - name: Install dependencies
         working-directory: ./client
@@ -116,7 +116,7 @@ jobs:
     name: Quality & Security
     runs-on: ubuntu-latest
     
-    steps:
+    steps: 
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -135,4 +135,3 @@ jobs:
       - name: Check for outdated dependencies (Frontend)
         working-directory: ./client
         run: npm outdated || true
-
