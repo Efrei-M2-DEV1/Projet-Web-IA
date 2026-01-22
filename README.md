@@ -131,6 +131,7 @@ Dans un monde où la transparence alimentaire devient cruciale, **Analyseur d'In
 Avant de commencer, assurez-vous d'avoir installé :
 
 - **Node.js** : Version 18+ ([Télécharger](https://nodejs.org/))
+Nous avons utilisé des versions Node entre les v.22.12.0 et 23.3.0. 
 - **npm** : Inclus avec Node.js
 - **Une clé API Mistral** : [Créer un compte](https://console.mistral.ai/)
 
