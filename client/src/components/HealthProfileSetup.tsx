@@ -44,7 +44,7 @@ export function HealthProfileSetup({ onSave }: HealthProfileSetupProps) {
       {/* Bouton flottant pour ouvrir le profil */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform"
+        className="absolute right-0 bottom-0 z-60 bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform pointer-events-auto"
       >
         👤
       </button>

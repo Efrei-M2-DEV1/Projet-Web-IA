@@ -181,7 +181,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-yellow-400 to-amber-400 pb-24 md:pb-0 safe-area-top safe-area-bottom">
       {/* Navigation mobile fixe en bas - style app mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom md:hidden">
-        <div className="grid grid-cols-2 h-24 bg-white/10 backdrop-blur-xl">
+        <div className="grid grid-cols-2 h-24 bg-black/40 backdrop-blur-xl">
           <button
             onClick={handleNewAnalysis}
             className={`flex flex-col items-center justify-center gap-2 transition-all relative ${
@@ -417,7 +417,11 @@ function App() {
       {showHelp && <Help onClose={() => setShowHelp(false)} />}
 
       {/* 🆕 Bouton profil santé flottant - Mobile & Desktop */}
-      <HealthProfileSetup onSave={() => window.location.reload()} />
+       {/* 🆕 Bouton profil santé flottant - Mobile & Desktop (unique et au-dessus de la nav) */}
+      <div className="fixed right-4 bottom-36 z-60 pointer-events-auto md:static">
+        <HealthProfileSetup onSave={() => window.location.reload()} />
+     </div>
+      
     </div>
   );
 }
