@@ -259,24 +259,142 @@ npm run dev
 
 ## 📱 Test sur Mobile
 
-### 📶 Sur le même réseau WiFi
+### 🎯 Méthode 1 : Accès Direct via Réseau Local (Recommandée)
 
-1. **Trouvez votre IP locale** :
+Cette méthode est la plus simple et ne nécessite aucun outil externe.
 
-   ```bash
-   # Windows
-   ipconfig
+#### 📋 Prérequis
 
-   # Cherchez "Adresse IPv4" (ex: 192.168.1.10)
-   ```
+- ✅ Ordinateur et téléphone sur le **même réseau WiFi**
+- 📱 **Alternative** : Activer le partage de connexion mobile depuis votre téléphone
 
-2. **Lancez avec --host** :
+#### 🚀 Étapes détaillées
 
-   ```bash
-   cd client
-   npm run dev -- --host
-   ```
- v3** : Styling utility-first avec mode sombre
+**1️⃣ Démarrez l'application complète**
+
+Depuis la racine du projet :
+
+```bash
+npm run dev
+```
+
+> Cela lance automatiquement le backend ET le frontend
+
+**2️⃣ Récupérez l'adresse Network**
+
+Dans votre terminal, Vite affichera **2 adresses** : (c'est un exemple)
+
+```bash
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.1.114:5173/  👈 C'est celle-ci ! 
+```
+
+📝 **Note** : L'adresse Network correspond à l'IP locale de votre ordinateur sur le réseau WiFi
+
+**3️⃣ Connectez-vous depuis votre mobile**
+
+Sur votre smartphone (ou tablette ou PC, Mac...) IOS, Android (ou autre) :
+
+1. **Ouvrez un navigateur** (recommandations ci-dessous)
+2. **Tapez l'adresse Network** dans la barre d'adresse
+   - Exemple : `http://192.168.1.187:5173/`
+3. **Validez** et laissez la page charger
+
+#### 🌐 Navigateurs Recommandés
+
+| Navigateur | Compatibilité | Remarques                                      |
+| ---------- | ------------- | ---------------------------------------------- |
+| ✅ Chrome  | Excellent     | Recommandé - Fonctionne parfaitement           |
+| ✅ Firefox | Excellent     | Recommandé - Accès caméra fluide               |
+| ✅ Edge    | Bon           | Compatible                                     |
+| ⚠️ Safari  | Limité        | **Non recommandé sur iOS** - Bloque par défaut |
+
+#### 🔒 Message de Sécurité (Normal)
+
+Lors de votre première connexion, vous verrez probablement :
+
+```
+⚠️ Avertissement : Site potentiellement dangereux
+   Connexion non sécurisée
+```
+
+**C'est normal !** En développement local, il n'y a pas de certificat HTTPS.
+
+**🔓 Comment continuer** :
+
+- **Chrome/Firefox** : Cliquez sur "Paramètres avancés" → "Continuer malgré tout"
+- **Autre navigateur** : Cherchez l'option "Accéder au site" ou "Continuer"
+
+✅ Une fois validé, vous arriverez sur l'application **Analyseur d'Ingrédients**
+
+#### 💡 Astuces & Dépannage
+
+**❌ "Impossible de se connecter"**
+
+- Vérifiez que votre téléphone est bien sur le **même WiFi** que votre PC
+- Désactivez temporairement le pare-feu Windows/Mac
+- Essayez de redémarrer `npm run dev`
+
+**❌ "L'adresse Network n'apparaît pas"**
+
+```bash
+# Lancez manuellement avec l'option --host
+cd client
+npm run dev -- --host
+```
+
+**📸 Autorisation caméra refusée**
+
+- Allez dans les paramètres du navigateur mobile
+- Autorisez l'accès à la caméra pour ce site
+- Rechargez la page
+
+---
+
+### 🌐 Méthode 2 : Tunnel HTTPS via ngrok (Pour iOS Strict)
+
+⚠️ **Utilisez cette méthode si** :
+
+- Safari bloque complètement l'accès
+- Vous devez tester sur iOS avec HTTPS obligatoire
+- Vous voulez partager l'app à distance
+
+#### 📦 Installation de ngrok
+
+```bash
+# Installez ngrok globalement
+npm install -g ngrok
+```
+
+#### 🚀 Lancement
+
+```bash
+# Démarrez ngrok pour exposer le port frontend
+ngrok http 5173
+```
+
+#### 🔗 Accès
+
+Ngrok affichera une URL HTTPS :
+
+```
+Forwarding: https://abc123-xyz456.ngrok-free.app → http://localhost:5173
+```
+
+**Utilisez cette URL** sur n'importe quel appareil (même hors réseau local) !
+
+📌 **Avantage** : HTTPS natif, compatible iOS Safari  
+📌 **Inconvénient** : Nécessite une connexion internet, gratuit limité
+
+---
+
+## 🛠️ Technologies
+
+### **Frontend**
+
+- ⚛️ **React 18** + **TypeScript** : Framework UI moderne
+- ⚡ **Vite** : Build tool ultra-rapide
+- 🎨 **Tailwind CSS v3** : Styling utility-first avec mode sombre
 - 📷 **MediaDevices API** : Accès webcam/caméra
 - 🗣️ **Web Speech API** : Recherche vocale intégrée
 - 💾 **localStorage** : Persistance profils et historique
@@ -296,12 +414,16 @@ npm run dev
 - 🐛 **ESLint** : Linting du code
 - 🧪 **Jest + Supertest** : Suite de tests (68% coverage)
 
-# Utilisez l'URL HTTPS fournie (ex: https://abc123.ngrok.io)
-```
-
 ---
 
-## 🛠️ Technologies     # Capture photo/upload
+## 📂 Structure du Projet
+
+```
+projet-web-ia/
+├── 📁 client/                 # Application React (Frontend)
+│   ├── src/
+│   │   ├── components/        # Composants React
+│   │   │   ├── ImageUpload.tsx           # Capture photo/upload
 │   │   │   ├── AnalysisResults.tsx       # Affichage résultats
 │   │   │   ├── HealthProfileSetup.tsx    # 🆕 Profil santé personnalisé
 │   │   │   ├── PersonalizedAlerts.tsx    # 🆕 Alertes selon profil
@@ -519,7 +641,6 @@ npm run test:coverage
 ## 🚀 Prochaines Étapes
 
 - [ ] Amélioration de la précision OCR
-- [ ] Ajout de profils utilisateurs
 - [ ] Système de favoris
 - [ ] Mode hors ligne (PWA)
 - [ ] Base de données produits
