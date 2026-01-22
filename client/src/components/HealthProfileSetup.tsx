@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   COMMON_ALLERGENS,
   //   HealthProfile,
@@ -10,11 +10,17 @@ import type { HealthProfile } from "../types";
 
 interface HealthProfileSetupProps {
   onSave?: () => void;
+  onOpen?: () => void;
+  onClose?: () => void;
 }
 
-export function HealthProfileSetup({ onSave }: HealthProfileSetupProps) {
+export function HealthProfileSetup({ onSave, onOpen, onClose }: HealthProfileSetupProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [profile, setProfile] = useState<HealthProfile>(loadHealthProfile());
+useEffect(() => {
+    if (isOpen) onOpen?.();
+   else onClose?.();
+  }, [isOpen, onOpen, onClose]);
 
   const handleSave = () => {
     saveHealthProfile(profile);

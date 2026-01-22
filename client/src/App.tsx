@@ -21,6 +21,7 @@ function App() {
   const [history, setHistory] = useState<AnalysisResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   // 🆕 État pour le profil santé
   const profileActive = hasActiveProfile();
@@ -179,8 +180,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-yellow-400 to-amber-400 pb-24 md:pb-0 safe-area-top safe-area-bottom">
-      {/* Navigation mobile fixe en bas - style app mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom md:hidden">
+  
+      {/* Navigation mobile fixe en bas - cachée quand modal profil ouverte */}
++      <nav className={`fixed bottom-0 left-0 right-0 z-50 safe-area-bottom md:hidden ${profileModalOpen ? 'hidden' : ''}`}>
+      
         <div className="grid grid-cols-2 h-24 bg-black/40 backdrop-blur-xl">
           <button
             onClick={handleNewAnalysis}
@@ -419,7 +422,9 @@ function App() {
       {/* 🆕 Bouton profil santé flottant - Mobile & Desktop */}
        {/* 🆕 Bouton profil santé flottant - Mobile & Desktop (unique et au-dessus de la nav) */}
       <div className="fixed right-4 bottom-36 z-60 pointer-events-auto md:static">
-        <HealthProfileSetup onSave={() => window.location.reload()} />
+        <HealthProfileSetup onSave={() => window.location.reload()}
+        onOpen={() => setProfileModalOpen(true)}
+        onClose={() => setProfileModalOpen(false)} />
      </div>
       
     </div>
