@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createImagePreview } from "../services/api";
 
 interface ImageUploadProps {
   onImageSelect: (file: File, preview: string) => void;
@@ -23,6 +22,22 @@ export function ImageUpload({ onImageSelect, isLoading }: ImageUploadProps) {
       stopCamera();
     };
   }, []);
+  // ✅ NOUVELLE FONCTION : Créer une preview depuis un File
+  const createImagePreview = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === "string") {
+          resolve(result);
+        } else {
+          reject(new Error("Impossible de lire l'image"));
+        }
+      };
+      reader.onerror = () => reject(new Error("Erreur de lecture du fichier"));
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {

@@ -121,6 +121,11 @@ function App() {
     try {
       const apiResponse = await analyzeImage(file);
 
+      console.log("📦 Réponse API complète:", apiResponse);
+      console.log("📋 Summary reçu:", apiResponse.analysis.summary);
+
+     
+
       // Transformer ApiResponse en AnalysisResult
       const result: AnalysisResult = {
         id: `analysis-${Date.now()}`,
@@ -131,15 +136,14 @@ function App() {
         grade: apiResponse.analysis.grade,
         summary: apiResponse.analysis.summary,
         // 🆕 Inclure les données personnalisées si présentes
-        personalizedWarnings: apiResponse.analysis.personalizedWarnings,
-        suitabilityScore: apiResponse.analysis.suitabilityScore,
-        profileRecommendation: apiResponse.analysis.profileRecommendation,
+        
       };
 
       setAnalysisResult(result);
       saveToHistory(result);
       loadHistory();
       setCurrentView("results");
+      
     } catch (err) {
       console.error("Erreur lors de l'analyse:", err);
       setError(

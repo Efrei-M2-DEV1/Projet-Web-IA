@@ -143,7 +143,7 @@ export const AnalysisResults = ({ result }: AnalysisResultsProps) => {
         )}
 
         {/* Points de vigilance */}
-        {result.summary.warnings.length > 0 && (
+        {result.summary?.warnings && result.summary.warnings.length > 0 && (
           <div className="bg-orange-50 rounded-xl shadow-lg p-6 border border-orange-200">
             <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center gap-2">
               <span>⚠️</span>
@@ -161,7 +161,7 @@ export const AnalysisResults = ({ result }: AnalysisResultsProps) => {
         )}
 
         {/* Recommandations */}
-        {result.summary.recommendations.length > 0 && (
+        {result.summary?.recommendations && result.summary.recommendations.length > 0 && (
           <div className="bg-blue-50 rounded-xl shadow-lg p-6 border border-blue-200">
             <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
               <span>💡</span>
@@ -178,6 +178,17 @@ export const AnalysisResults = ({ result }: AnalysisResultsProps) => {
           </div>
         )}
       </div>
+        {/* ✅ AJOUTER : Message si summary est vide */}
+      {(!result.summary || 
+        (result.summary.positives.length === 0 && 
+         result.summary.warnings.length === 0 && 
+         result.summary.recommendations.length === 0)) && (
+        <div className="bg-gray-50 rounded-xl shadow-lg p-6 border border-gray-200">
+          <p className="text-gray-600 text-center">
+            ℹ️ Aucune synthèse disponible pour cette analyse
+          </p>
+        </div>
+      )}
 
       {/* Avertissement */}
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 md:p-4">

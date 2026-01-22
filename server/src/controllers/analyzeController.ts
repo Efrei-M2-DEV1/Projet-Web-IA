@@ -1,29 +1,37 @@
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import fs from "fs";
 import { analyzeImageService } from "../services/mistralService";
 
-export const analyzeImage = async (req: Request, res: Response) => {
+export const analyzeFoodImage: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     console.log("📥 Requête d'analyse reçue");
     console.log("📎 Fichiers joints:", req.file ? "Oui" : "Non");
     //1. Validation : Fichier reçu ?
     if (!req.file) {
       console.error("❌ Aucun fichier image fourni");
-      return res.status(400).json({ error: "Aucun fichier image reçu." });
+      res.status(400).json({
+        success: false,
+        error: "Aucune image fournie",
+      });
+      return;
     }
-    console.log("📸 Fichier reçu:", {
-      originalName: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      path: req.file.path,
-    });
-    //2.Conversion de l'image (Fichier temp -> Base64 pour Mistral)
-    const imageBuffer = fs.readFileSync(req.file.path);
-    const base64Image = `data:${req.file.mimetype};base64,${imageBuffer.toString("base64")}`;
+
+    // ✅ Récupérer le profil santé depuis le body (envoyé par le client)
+    const healthProfile = req.body.healthProfile
+      ? JSON.parse(req.body.healthProfile)
+      : null;
+
+    console.log("📸 Image reçue:", req.file.originalname);
+    console.log("👤 Profil santé reçu:", healthProfile);
+
+    const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
 
     //3.Appel du service d'analyse
     console.log("🔍 Analyse en cours pour :", req.file.originalname);
-    const analyzeResult = await analyzeImageService(base64Image);
+    const analyzeResult = await analyzeImageService(base64Image, healthProfile);
     console.log("✅ Analyse terminée");
     console.log("📊 Résultat:", {
       textLength: analyzeResult.extractedText.length,
@@ -31,9 +39,7 @@ export const analyzeImage = async (req: Request, res: Response) => {
       score: analyzeResult.analysis.score,
       grade: analyzeResult.analysis.grade,
     });
-    //4. Nettoyage : Suppression du fichier temporaire
-    fs.unlinkSync(req.file.path);
-    console.log("🗑️ Fichier temporaire supprimé");
+ 
     //5. Réponse au client
     console.log("📤 Envoi de la réponse au client");
     res.status(200).json(analyzeResult);
@@ -42,9 +48,47 @@ export const analyzeImage = async (req: Request, res: Response) => {
     // Si le fichier temporaire existe, le supprimer
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
-    return res.status(500).json({
-      error: "Erreur lors de l'analyse de l'image.",
-      details: error instanceof Error ? error.message : "Erreur inconnue",
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inconnue",
+    });
+  }
+};
+
+export const analyzeTextIngredients: RequestHandler = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { text } = req.body;
+
+    if (!text || typeof text !== "string") {
+      res.status(400).json({
+        success: false,
+        error: "Texte d'ingrédients requis",
+      });
+      return;
+    }
+
+    console.log("Analyse de texte:", text.substring(0, 100));
+
+    // Pour le texte, on pourrait aussi personnaliser mais on garde simple ici
+    const analysis = {
+      ingredients: [],
+      score: 50,
+      summary:"Analyse de texte non implémentée"
+      };
+    
+
+    res.json({
+      success: true,
+      analysis,
+    });
+  } catch (error) {
+    console.error("Erreur analyse texte:", error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inconnue",
     });
   }
 };

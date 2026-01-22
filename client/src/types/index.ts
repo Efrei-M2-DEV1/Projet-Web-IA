@@ -1,12 +1,6 @@
 export interface IngredientAnalysis {
   name: string;
-  category:
-    | "allergen"
-    | "preservative"
-    | "additive"
-    | "irritant"
-    | "beneficial"
-    | "other";
+  category: string;
   explanation: string;
   riskLevel: "low" | "medium" | "high" | "none";
 }
@@ -31,6 +25,7 @@ export interface AnalysisResult {
 }
 
 export interface ApiResponse {
+  success: boolean;
   extractedText: string;
   analysis: {
     ingredients: IngredientAnalysis[];
@@ -41,11 +36,14 @@ export interface ApiResponse {
       warnings: string[];
       recommendations: string[];
     };
+    // Nouvelles propriétés
+    };
     personalizedWarnings?: PersonalizedWarning[];
     suitabilityScore?: number;
     profileRecommendation?: string;
   };
-}
+  
+
 
 export interface HealthProfile {
   id: string;

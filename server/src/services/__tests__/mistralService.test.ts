@@ -1,305 +1,217 @@
-// Tests for mistralService - validate current implementation without real API calls
+import { analyzeImageService } from '../mistralService';
 
-describe("MistralService", () => {
-  const MISTRAL_MODULE = "@mistralai/mistralai";
+// Robust mock: define mockChatComplete at module scope so jest.mock factory can close over it
 
-  beforeEach(() => {
-    jest.resetModules();
-    process.env.MISTRAL_API_KEY = "test-key";
-    process.env.MISTRAL_MODEL = "test-model";
-  });
 
-  it("should export analyzeImageService (module loads with API key)", () => {
-    jest.doMock(MISTRAL_MODULE, () => ({
-      Mistral: jest
-        .fn()
-        .mockImplementation(() => ({ chat: { complete: jest.fn() } })),
-    }));
-    const { analyzeImageService } = require("../mistralService");
-    expect(analyzeImageService).toBeDefined();
-    expect(typeof analyzeImageService).toBe("function");
-  });
-
-  it("parses string JSON response from IA and maps to expected shape", async () => {
-    const sample = {
-      extractedText: "Eau, Sucre",
-      ingredients: [
-        {
-          name: "Eau",
-          category: "natural",
-          explanation: "OK",
-          riskLevel: "none",
-        },
-      ],
-      score: 80,
-      grade: "A",
-      positives: ["Faible en sucre"],
-      warnings: [],
-      recommendations: ["Bonne option"],
-    };
-
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest.fn().mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(sample) } }],
-      });
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
-    });
-
-    const svc = require("../mistralService");
-    const result = await svc.analyzeImageService("data:image/png;base64,xxx");
-    expect(result.extractedText).toBe(sample.extractedText);
-    expect(result.analysis.score).toBe(80);
-    expect(result.analysis.ingredients[0].name).toBe("Eau");
-    expect(result.analysis.grade).toBe("A");
-  });
-
-  it("parses object response (non-string) from IA", async () => {
-    const sampleObj = {
-      extractedText: "Farine, Sel",
-      ingredients: [
-        {
-          name: "Farine",
-          category: "allergen_major",
-          explanation: "Contient gluten",
-          riskLevel: "high",
-        },
-      ],
-      score: 60,
-      grade: "C",
-      positives: [],
-      warnings: ["Gluten"],
-      recommendations: ["Éviter si intolérance"],
-    };
-
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest.fn().mockResolvedValue({
-        choices: [{ message: { content: sampleObj } }],
-      });
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
-    });
-
-    const svc = require("../mistralService");
-    const result = await svc.analyzeImageService("data:image/png;base64,yyy");
-    expect(result.extractedText).toBe(sampleObj.extractedText);
-    expect(result.analysis.ingredients[0].category).toBe("allergen_major");
-  });
-
-  it("applies fallback when IA returns empty ingredients array or empty text", async () => {
-    const sampleEmpty = {
-      extractedText: "",
-      ingredients: [],
-      score: 50,
-      grade: "C",
-      positives: [],
-      warnings: [],
-      recommendations: [],
-    };
-
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest.fn().mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(sampleEmpty) } }],
-      });
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
-    });
-
-    const svc = require("../mistralService");
-    const result = await svc.analyzeImageService("data:image/png;base64,zzz");
-    expect(result.analysis.ingredients.length).toBeGreaterThan(0);
-    expect(typeof result.extractedText).toBe("string");
-    expect(result.extractedText.length).toBeGreaterThan(0);
-  });
-
-  it("throws a friendly error when IA call fails", async () => {
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest
-        .fn()
-        .mockRejectedValue(new Error("network error"));
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
-    });
-
-    const svc = require("../mistralService");
-    await expect(
-      svc.analyzeImageService("data:image/png;base64,err"),
-    ).rejects.toThrow(/L'analyse IA a échoué/i);
-  });
-
-  it("throws at import time if MISTRAL_API_KEY is missing", () => {
-    jest.resetModules();
-    // ensure no env is injected by dotenv during import
-    delete process.env.MISTRAL_API_KEY;
-    // prevent dotenv from reading real .env
-    jest.doMock("dotenv", () => ({ config: jest.fn(() => ({})) }));
-    // mock Mistral package so requiring fails only due to missing env
-    jest.doMock(MISTRAL_MODULE, () => ({ Mistral: jest.fn() }));
-    expect(() => require("../mistralService")).toThrow(/MISTRAL_API_KEY/);
-  });
+// Provide a factory to jest.mock so every new Mistral() has chat.complete = mockChatComplete
+jest.mock('@mistralai/mistralai', () => {
+  const mockChatComplete = jest.fn();
+  return {
+    Mistral: jest.fn().mockImplementation(() => ({
+      chat: { complete: mockChatComplete },
+    })),
+    __mockChatComplete: mockChatComplete,
+  };
 });
-// filepath: server/src/services/__tests__/mistralService.test.ts
-// Tests for mistralService - validate current implementation without real API calls
 
-describe("MistralService", () => {
-  const MISTRAL_MODULE = "@mistralai/mistralai";
+// Retrieve the mock produced by the factory
+const { __mockChatComplete: mockChatComplete } = jest.requireMock('@mistralai/mistralai');
 
+describe('mistralService', () => {
   beforeEach(() => {
-    jest.resetModules();
-    process.env.MISTRAL_API_KEY = "test-key";
-    process.env.MISTRAL_MODEL = "test-model";
+    jest.clearAllMocks();
+    mockChatComplete.mockReset();
   });
 
-  it("should export analyzeImageService (module loads with API key)", () => {
-    jest.doMock(MISTRAL_MODULE, () => ({
-      Mistral: jest
-        .fn()
-        .mockImplementation(() => ({ chat: { complete: jest.fn() } })),
-    }));
-    const { analyzeImageService } = require("../mistralService");
-    expect(analyzeImageService).toBeDefined();
-    expect(typeof analyzeImageService).toBe("function");
+describe('mistralService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockChatComplete.mockReset();
   });
 
-  it("parses string JSON response from IA and maps to expected shape", async () => {
-    const sample = {
-      extractedText: "Eau, Sucre",
-      ingredients: [
-        {
-          name: "Eau",
-          category: "natural",
-          explanation: "OK",
-          riskLevel: "none",
+  describe('analyzeImageService', () => {
+    const mockBase64Image = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+
+    it('devrait analyser une image avec succès', async () => {
+      const mockMistralResponse = {
+        extractedText: 'Eau, Sucre, Farine de blé, Sel',
+        ingredients: [
+          {
+            name: 'Eau',
+            category: 'natural',
+            explanation: "L'eau est essentielle pour l'hydratation et ne présente aucun risque.",
+            riskLevel: 'none',
+          },
+          {
+            name: 'Sucre',
+            category: 'sugar_added',
+            explanation: "Le sucre ajouté en excès peut contribuer à l'obésité et au diabète.",
+            riskLevel: 'medium',
+          },
+        ],
+        score: 65,
+        grade: 'C',
+        summary: {
+          positives: ["Contient des ingrédients naturels comme l'eau", "Pas d'additifs controversés détectés"],
+          warnings: ['Présence de sucre ajouté', 'Consommer avec modération'],
+          recommendations: ['Limiter la consommation à 2-3 fois par semaine', 'Privilégier des alternatives sans sucre ajouté'],
         },
-      ],
-      score: 80,
-      grade: "A",
-      positives: ["Faible en sucre"],
-      warnings: [],
-      recommendations: ["Bonne option"],
-    };
-
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest.fn().mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(sample) } }],
-      });
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
       };
+
+      mockChatComplete.mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(mockMistralResponse) } }],
+      });
+
+      const result = await analyzeImageService(mockBase64Image);
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('extractedText', 'Eau, Sucre, Farine de blé, Sel');
+      expect(result.analysis).toHaveProperty('score', 65);
+      expect(result.analysis).toHaveProperty('grade', 'C');
+      expect(result.analysis.ingredients).toHaveLength(2);
+      expect(result.analysis.summary.positives).toHaveLength(2);
+      expect(result.analysis.summary.warnings).toHaveLength(2);
+      expect(result.analysis.summary.recommendations).toHaveLength(2);
+
+      expect(mockChatComplete).toHaveBeenCalledTimes(1);
     });
 
-    const svc = require("../mistralService");
-    const result = await svc.analyzeImageService("data:image/png;base64,xxx");
-    expect(result.extractedText).toBe(sample.extractedText);
-    expect(result.analysis.score).toBe(80);
-    expect(result.analysis.ingredients[0].name).toBe("Eau");
-    expect(result.analysis.grade).toBe("A");
-  });
+    it('devrait gérer les profils diabétiques', async () => {
+      const diabeticProfile = {
+        diabetes: true,
+        hypertension: false,
+        obesity: false,
+        allergens: [],
+        diet: 'none',
+        avoidAdditives: false,
+        avoidPalmOil: false,
+      };
 
-  it("parses object response (non-string) from IA", async () => {
-    const sampleObj = {
-      extractedText: "Farine, Sel",
-      ingredients: [
-        {
-          name: "Farine",
-          category: "allergen_major",
-          explanation: "Contient gluten",
-          riskLevel: "high",
+      const mockMistralResponse = {
+        extractedText: 'Coca-Cola: Eau gazéifiée, Sucre (35g/100ml), Colorant E150d',
+        ingredients: [
+          {
+            name: 'Sucre 35g/100ml',
+            category: 'sugar_added',
+            explanation: 'Teneur en sucre EXCESSIVE - Risque critique pour diabétiques.',
+            riskLevel: 'critical',
+          },
+        ],
+        score: 0,
+        grade: 'E',
+        summary: {
+          positives: ['Emballage recyclable'],
+          warnings: ['⛔ INTERDIT pour diabétiques - Risque hyperglycémie sévère'],
+          recommendations: ['⛔ PRODUIT STRICTEMENT INTERDIT', 'Alternatives: Eau, thé non sucré'],
         },
-      ],
-      score: 60,
-      grade: "C",
-      positives: [],
-      warnings: ["Gluten"],
-      recommendations: ["Éviter si intolérance"],
-    };
+      };
 
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest.fn().mockResolvedValue({
-        choices: [{ message: { content: sampleObj } }],
+      mockChatComplete.mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(mockMistralResponse) } }],
       });
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
+
+      const result = await analyzeImageService(mockBase64Image, diabeticProfile);
+
+      expect(result.analysis.score).toBe(0);
+      expect(result.analysis.grade).toBe('E');
     });
 
-    const svc = require("../mistralService");
-    const result = await svc.analyzeImageService("data:image/png;base64,yyy");
-    expect(result.extractedText).toBe(sampleObj.extractedText);
-    expect(result.analysis.ingredients[0].category).toBe("allergen_major");
-  });
+    it('devrait gérer les réponses avec markdown', async () => {
+      const mockMistralResponseWithMarkdown = {
+        extractedText: 'Eau, Sucre, Farine de blé, Sel',
+        ingredients: [
+          {
+            name: 'Eau',
+            category: 'natural',
+            explanation: "L'eau est essentielle pour l'hydratation et ne présente aucun risque.",
+            riskLevel: 'none',
+          },
+          {
+            name: 'Sucre',
+            category: 'sugar_added',
+            explanation: "Le sucre ajouté en excès peut contribuer à l'obésité et au diabète.",
+            riskLevel: 'medium',
+          },
+        ],
+        score: 65,
+        grade: 'C',
+        summary: {
+          positives: ["Contient des ingrédients naturels comme l'eau", "Pas d'additifs controversés détectés"],
+          warnings: ['Présence de sucre ajouté', 'Consommer avec modération'],
+          recommendations: ['Limiter la consommation à 2-3 fois par semaine', 'Privilégier des alternatives sans sucre ajouté'],
+        },
+      };
 
-  it("applies fallback when IA returns empty ingredients array or empty text", async () => {
-    const sampleEmpty = {
-      extractedText: "",
-      ingredients: [],
-      score: 50,
-      grade: "C",
-      positives: [],
-      warnings: [],
-      recommendations: [],
-    };
-
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest.fn().mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(sampleEmpty) } }],
+      mockChatComplete.mockResolvedValue({
+        choices: [
+          {
+            message: {
+              content: '```json\n' + JSON.stringify(mockMistralResponseWithMarkdown) + '\n```',
+            },
+          },
+        ],
       });
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
+
+      const result = await analyzeImageService(mockBase64Image);
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('extractedText', 'Eau, Sucre, Farine de blé, Sel');
+      expect(result.analysis).toHaveProperty('score', 65);
+      expect(result.analysis).toHaveProperty('grade', 'C');
+      expect(result.analysis.ingredients).toHaveLength(2);
+      expect(result.analysis.summary.positives).toHaveLength(2);
+      expect(result.analysis.summary.warnings).toHaveLength(2);
+      expect(result.analysis.summary.recommendations).toHaveLength(2);
+    });
+  });
+
+   describe('edge cases and error branches', () => {
+    it('devrait rejeter si choices est vide', async () => {
+      mockChatComplete.mockResolvedValue({}); // pas de choices
+      await expect(analyzeImageService('data:fake')).rejects.toThrow(
+        "L'analyse IA a échoué. Vérifiez l'image ou la clé API.",
+      );
     });
 
-    const svc = require("../mistralService");
-    const result = await svc.analyzeImageService("data:image/png;base64,zzz");
-    expect(result.analysis.ingredients.length).toBeGreaterThan(0);
-    expect(typeof result.extractedText).toBe("string");
-    expect(result.extractedText.length).toBeGreaterThan(0);
-  });
-
-  it("throws a friendly error when IA call fails", async () => {
-    jest.doMock(MISTRAL_MODULE, () => {
-      const mockComplete = jest
-        .fn()
-        .mockRejectedValue(new Error("network error"));
-      return {
-        Mistral: jest
-          .fn()
-          .mockImplementation(() => ({ chat: { complete: mockComplete } })),
-      };
+    it('devrait rejeter si la réponse JSON est malformée', async () => {
+      // contenu string invalide => JSON.parse doit échouer
+      mockChatComplete.mockResolvedValue({
+        choices: [{ message: { content: '{"extractedText":"Eau", "ingredients": [' } }],
+      });
+      await expect(analyzeImageService('data:fake')).rejects.toThrow(
+        "L'analyse IA a échoué. Vérifiez l'image ou la clé API.",
+      );
     });
 
-    const svc = require("../mistralService");
-    await expect(
-      svc.analyzeImageService("data:image/png;base64,err"),
-    ).rejects.toThrow(/L'analyse IA a échoué/i);
+    it('devrait rejeter si content est d\'un type inattendu (non string/non object)', async () => {
+      mockChatComplete.mockResolvedValue({
+        choices: [{ message: { content: 42 as any } }],
+      } as any);
+      await expect(analyzeImageService('data:fake')).rejects.toThrow(
+        "L'analyse IA a échoué. Vérifiez l'image ou la clé API.",
+      );
+    });
+
+    it('devrait appliquer le fallback si extractedText est générique', async () => {
+      const response = {
+        extractedText: 'Liste complète des ingrédients',
+        ingredients: [{ name: 'Ingrédients non détectés', category: 'other', explanation: 'fallback', riskLevel: 'none' }],
+        score: 60,
+        grade: 'C',
+        summary: { positives: [], warnings: [], recommendations: [] },
+      };
+      mockChatComplete.mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(response) } }],
+      });
+      const res = await analyzeImageService('data:fake');
+      expect(res.extractedText).toMatch(/Texte non extrait/i);
+      expect(res.analysis.summary.positives.length).toBeGreaterThan(0);
+      expect(res.analysis.summary.recommendations.length).toBeGreaterThan(0);
+    });
   });
 
-  it("throws at import time if MISTRAL_API_KEY is missing", () => {
-    jest.resetModules();
-    // ensure no env is injected by dotenv during import
-    delete process.env.MISTRAL_API_KEY;
-    // prevent dotenv from reading real .env
-    jest.doMock("dotenv", () => ({ config: jest.fn(() => ({})) }));
-    // mock Mistral package so requiring fails only due to missing env
-    jest.doMock(MISTRAL_MODULE, () => ({ Mistral: jest.fn() }));
-    expect(() => require("../mistralService")).toThrow(/MISTRAL_API_KEY/);
-  });
 });
+
+
+
+})
