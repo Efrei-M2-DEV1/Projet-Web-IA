@@ -47,7 +47,7 @@ export function ImageUpload({ onImageSelect, isLoading }: ImageUploadProps) {
   }, [stopCamera]);
 
   // ✅ NOUVELLE FONCTION : Créer une preview depuis un File
-  const createImagePreview = (file: File): Promise<string> => {
+   const createImagePreview = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
