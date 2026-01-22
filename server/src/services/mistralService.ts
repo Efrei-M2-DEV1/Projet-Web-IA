@@ -14,182 +14,372 @@ if (!apiKey) {
 
 const client = new Mistral({ apiKey });
 
-export const analyzeImageService = async (base64Image: string) => {
-  try {
-    // Le Prompt qui fait le travail
-    // const prompt = `
-    //         Tu es un expert scientifique et sanitaire. Analyse cette image (étiquette produit).
+// ✅ NOUVELLE FONCTION : Générer un prompt PERSONNALISÉ selon le profil
+function generatePersonalizedPrompt(healthProfile?: any): string {
+  // Profil par défaut si non fourni
+  const profile = healthProfile || {
+    diabetes: false,
+    hypertension: false,
+    obesity: false,
+    allergens: [],
+    diet: "none",
+    avoidAdditives: false,
+    avoidPalmOil: false,
+  };
 
-    //         Tâche :
-    //         1. Détecte la catégorie : [Alimentaire, Cosmétique, Ménager, Autre].
-    //         2. Liste les ingrédients clés (bons ou mauvais).
-    //         3. Donne un "Score Santé" de 0 à 100.
-    //         4. Rédige un verdict court, fun et pédagogique (tutoiement autorisé).
+  // 🔥 CONSTRUCTION DU PROMPT DYNAMIQUE
+  let profileInstructions = "";
+  let criticalRules = "";
+  let scoringAdjustments = "";
 
-    //         Réponds UNIQUEMENT avec ce JSON strict :
-    //         {
-    //             "category": "string",
-    //             "score": number,
-    //             "verdict_title": "string (ex: Excellent choix !)",
-    //             "verdict_color": "string (green, orange, red)",
-    //             "explanation": "string",
-    //             "ingredients_detected": ["string"]
-    //         }
-    //     `;
-    //     const prompt = `Tu es un expert en nutrition et sécurité alimentaire. Analyse cette image d'étiquette alimentaire.
+  // 🩺 DIABÈTE
+  if (profile.diabetes) {
+    profileInstructions += `
+🚨 PROFIL DIABÉTIQUE DÉTECTÉ - RÈGLES STRICTES :
+- Tout produit avec >10g de sucre/100g reçoit automatiquement un score ≤ 40/100 (Grade D ou E)
+- Tout produit avec >5g de sucre/100g reçoit un score ≤ 60/100 (Grade C max)
+- Sirop de glucose-fructose, dextrose, maltodextrine = SCORE MAX 25/100 (Grade E)
+- Édulcorants artificiels (aspartame, sucralose) = WARNING CRITIQUE même si 0 calorie
+- INTERDICTIONS ABSOLUES : Sodas sucrés, bonbons, pâtisseries industrielles, céréales sucrées
+`;
 
-    // INSTRUCTIONS STRICTES :
-    // 1. Lis attentivement TOUT le texte visible sur l'étiquette
-    // 2. Extrais la liste complète des ingrédients
-    // 3. Pour CHAQUE ingrédient, fournis :
-    //    - Le nom exact
-    //    - La catégorie (allergen/preservative/additive/irritant/beneficial/other)
-    //    - Le niveau de risque (none/low/medium/high)
-    //    - Une explication claire (1-2 phrases)
+    criticalRules += `
+- Si >15g sucre/100g → warnings DOIT contenir "⛔ INTERDIT pour diabétiques - Risque hyperglycémie sévère"
+- Si 10-15g sucre/100g → warnings DOIT contenir "🚫 DÉCONSEILLÉ diabète - Glycémie impactée"
+- Si 5-10g sucre/100g → warnings DOIT contenir "⚠️ MODÉRATION STRICTE diabète - Contrôler les portions"
+`;
 
-    // 4. Calcule un score santé réaliste (0-100) basé sur :
-    //    - Présence d'additifs : -5 à -20 points
-    //    - Allergènes : -10 à -30 points
-    //    - Sucres/graisses : -5 à -15 points
-    //    - Ingrédients naturels : +5 à +20 points
+    scoringAdjustments += `
+- Présence de sucres ajoutés : -30 points (au lieu de -15)
+- Sirop glucose-fructose : -50 points (au lieu de -18)
+- Index glycémique élevé (farine raffinée) : -15 points
+`;
+  }
 
-    // 5. Grade basé sur le score : A(90-100), B(75-89), C(60-74), D(40-59), E(0-39)
+  // 🩺 HYPERTENSION
+  if (profile.hypertension) {
+    profileInstructions += `
+🚨 PROFIL HYPERTENDU DÉTECTÉ - RÈGLES STRICTES :
+- Tout produit avec >1.5g de sel/100g reçoit un score ≤ 50/100 (Grade D)
+- Tout produit avec >2g de sel/100g reçoit un score ≤ 30/100 (Grade E)
+- Glutamate monosodique (E621) = SCORE MAX 20/100 (Grade E)
+- Bouillons cubes, sauces industrielles, charcuterie = AUTOMATIQUEMENT Grade D/E
+- INTERDICTIONS ABSOLUES : Chips, cacahuètes salées, plats préparés ultra-salés
+`;
 
-    // RÉPONDS UNIQUEMENT AVEC CE JSON (sans markdown, sans \`\`\`) :
-    // {
-    //   "extractedText": "Tous les ingrédients lus sur l'étiquette",
-    //   "ingredients": [
-    //     {
-    //       "name": "Nom de l'ingrédient",
-    //       "category": "allergen",
-    //       "explanation": "Explication détaillée",
-    //       "riskLevel": "high"
-    //     }
-    //   ],
-    //   "score": 75,
-    //   "grade": "B",
-    //   "positives": ["Point positif 1", "Point positif 2"],
-    //   "warnings": ["Avertissement 1", "Avertissement 2"],
-    //   "recommendations": ["Recommandation 1", "Recommandation 2"]
-    // }`;
+    criticalRules += `
+- Si >2g sel/100g → warnings DOIT contenir "⛔ INTERDIT hypertension - Risque AVC/infarctus"
+- Si 1.5-2g sel/100g → warnings DOIT contenir "🚫 DÉCONSEILLÉ hypertension - Pression artérielle affectée"
+- Si E621 détecté → warnings DOIT contenir "🚨 GLUTAMATE INTERDIT hypertension"
+`;
 
-    // console.log("🤖 Envoi à Mistral AI...");
-    const prompt = `Tu es un expert en nutrition certifié, formé aux standards de l'OMS, de l'EFSA et du Nutri-Score. Analyse cette étiquette alimentaire avec RIGUEUR et OBJECTIVITÉ.
+    scoringAdjustments += `
+- Présence de sel >1g/100g : -25 points (au lieu de -10)
+- E621 (glutamate) : -60 points (au lieu de -15)
+- Bouillons/sauces : -30 points
+`;
+  }
 
-📋 MÉTHODOLOGIE D'ANALYSE (inspirée de Yuka, Open Food Facts, ANSES) :
+  // ⚖️ OBÉSITÉ / CONTRÔLE DU POIDS
+  if (profile.obesity) {
+    profileInstructions += `
+🚨 PROFIL OBÉSITÉ/CONTRÔLE DU POIDS DÉTECTÉ - RÈGLES STRICTES :
+- Tout produit avec >20g de lipides/100g reçoit un score ≤ 45/100 (Grade D)
+- Huile de palme, graisses hydrogénées = SCORE MAX 30/100 (Grade E)
+- Produits ultra-transformés (>5 additifs) = SCORE MAX 40/100 (Grade D)
+- INTERDICTIONS ABSOLUES : Fast-food, pâtisseries industrielles, sodas sucrés, fritures
+`;
 
-1️⃣ EXTRACTION DES DONNÉES
-- Lis TOUT le texte visible sur l'étiquette
-- Identifie TOUS les ingrédients dans l'ordre de la liste
-- Note les additifs avec leur code E (ex: E330, E621)
-- Repère les allergènes majeurs (gluten, lactose, fruits à coque, etc.)
+    criticalRules += `
+- Si >500 kcal/100g → warnings DOIT contenir "⛔ HYPERCALORIQUE - Risque prise de poids"
+- Si >25g lipides/100g → warnings DOIT contenir "🚫 TROP GRAS pour contrôle du poids"
+- Si huile de palme détectée → warnings DOIT contenir "🚨 GRAISSES SATURÉES - Obésité"
+`;
 
-2️⃣ SYSTÈME DE NOTATION STRICT (0-100)
+    scoringAdjustments += `
+- Produits >400 kcal/100g : -20 points
+- Huile de palme : -35 points (au lieu de -12)
+- Graisses hydrogénées : -40 points
+`;
+  }
 
-DÉDUCTIONS IMPORTANTES :
-🔴 Additifs controversés (E621, E330, E951, colorants azoïques) : -8 à -15 points CHACUN
-🔴 Huile de palme / graisses hydrogénées : -12 points
-🔴 Sucres ajoutés >10g/100g : -15 points | >15g/100g : -25 points | >25g/100g : -35 points
-🔴 Sel >1.5g/100g : -10 points | >2g/100g : -20 points
-🔴 Allergènes majeurs (gluten, lactose, arachides) : -5 points chacun
-🔴 Édulcorants artificiels (aspartame, acésulfame-K) : -10 points chacun
-🔴 Sirop de glucose-fructose : -18 points
-🔴 Arômes artificiels : -8 points
-🔴 Plus de 5 additifs au total : -15 points supplémentaires
+  // 🌾 ALLERGÈNES
+  if (profile.allergens && profile.allergens.length > 0) {
+    const allergensList = profile.allergens
+      .map((a: string) => {
+        const map: Record<string, string> = {
+          gluten: "gluten/blé/seigle/orge",
+          lactose: "lait/lactose/lactosérum/caséine",
+          eggs: "œuf/albumine",
+          nuts: "amande/noisette/noix/pistache",
+          peanuts: "arachide/cacahuète",
+          soy: "soja",
+          fish: "poisson/anchois",
+          shellfish: "crustacé/crevette",
+          sulfites: "sulfite/E220/E221/E222",
+        };
+        return map[a] || a;
+      })
+      .join(", ");
+
+    profileInstructions += `
+🚨 ALLERGIES DÉTECTÉES : ${allergensList}
+- Si UN SEUL des allergènes est présent → SCORE AUTOMATIQUE = 0/100 (Grade E)
+- warnings DOIT contenir "⛔ ALLERGÈNE MAJEUR DÉTECTÉ : [nom] - PRODUIT INTERDIT"
+- Même traces possibles = INTERDICTION TOTALE
+- AUCUNE TOLÉRANCE sur les allergènes
+`;
+
+    criticalRules += `
+- Détection d'allergène = SCORE FORCÉ à 0/100
+- recommendation DOIT être "⛔ PRODUIT STRICTEMENT INTERDIT - Risque allergique mortel"
+`;
+  }
+
+  // 🌱 RÉGIMES ALIMENTAIRES (INCOMPATIBILITÉS STRICTES)
+  if (profile.diet === "vegan") {
+    profileInstructions += `
+🚨 RÉGIME VEGAN DÉTECTÉ - INCOMPATIBILITÉS ABSOLUES :
+- TOUT ingrédient d'origine animale = SCORE 0/100 (Grade E)
+- Lait, œufs, miel, gélatine, carmin (E120), cochenille = INTERDITS
+- Même si "bio" ou "naturel" → SI ANIMAL = INTERDIT
+- warnings DOIT contenir "⛔ NON-VEGAN : Contient [ingrédient animal]"
+`;
+
+    criticalRules += `
+- Détection lait/œuf/miel/gélatine/E120 → SCORE FORCÉ à 0/100
+- recommendation = "⛔ PRODUIT INCOMPATIBLE avec régime vegan"
+`;
+  }
+
+  if (profile.diet === "vegetarian") {
+    profileInstructions += `
+🚨 RÉGIME VÉGÉTARIEN DÉTECTÉ - INCOMPATIBILITÉS ABSOLUES :
+- Viande, poisson, gélatine (origine animale) = SCORE 0/100 (Grade E)
+- Présure animale, anchois, gélatine de porc = INTERDITS
+- warnings DOIT contenir "⛔ NON-VÉGÉTARIEN : Contient [viande/poisson]"
+`;
+
+    criticalRules += `
+- Détection viande/poisson/gélatine → SCORE FORCÉ à 0/100
+- recommendation = "⛔ PRODUIT INCOMPATIBLE avec régime végétarien"
+`;
+  }
+
+  if (profile.diet === "halal") {
+    profileInstructions += `
+🚨 RÉGIME HALAL DÉTECTÉ - INCOMPATIBILITÉS RELIGIEUSES STRICTES :
+- ALCOOL (éthanol, vin, bière, même traces) = SCORE 0/100 (Grade E)
+- Porc, gélatine de porc, saindoux = SCORE 0/100 (Grade E)
+- E120 (carmin/cochenille) si non certifié = SCORE 0/100
+- warnings DOIT contenir "⛔ HARAM : Contient alcool/porc - INTERDIT Islam"
+`;
+
+    criticalRules += `
+- Détection alcool/éthanol → SCORE FORCÉ à 0/100
+- Détection porc/gélatine animale → SCORE FORCÉ à 0/100
+- recommendation = "⛔ PRODUIT HARAM - Strictement interdit par l'Islam"
+`;
+  }
+
+  if (profile.diet === "kosher") {
+    profileInstructions += `
+🚨 RÉGIME CASHER DÉTECTÉ - INCOMPATIBILITÉS RELIGIEUSES STRICTES :
+- Porc, fruits de mer (crevettes, homard) = SCORE 0/100 (Grade E)
+- Mélange lait + viande = SCORE 0/100 (Grade E)
+- Gélatine non casher = INTERDIT
+- warnings DOIT contenir "⛔ NON-CASHER : [raison] - INTERDIT Judaïsme"
+`;
+
+    criticalRules += `
+- Détection porc/fruits de mer → SCORE FORCÉ à 0/100
+- recommendation = "⛔ PRODUIT NON-CASHER - Strictement interdit par le Judaïsme"
+`;
+  }
+
+  if (profile.diet === "gluten-free") {
+    profileInstructions += `
+🚨 RÉGIME SANS GLUTEN DÉTECTÉ :
+- Blé, seigle, orge, épeautre, kamut = SCORE 0/100 (Grade E)
+- Même traces de gluten = INTERDICTION TOTALE
+- warnings DOIT contenir "⛔ CONTIENT GLUTEN - INTERDIT maladie cœliaque"
+`;
+
+    criticalRules += `
+- Détection gluten → SCORE FORCÉ à 0/100
+- recommendation = "⛔ PRODUIT AVEC GLUTEN - Risque maladie cœliaque"
+`;
+  }
+
+  // ⚗️ PRÉFÉRENCES ADDITIFS
+  if (profile.avoidAdditives) {
+    profileInstructions += `
+🚨 ÉVITER LES ADDITIFS DEMANDÉ :
+- Tout additif controversé (E621, E951, colorants azoïques) = -25 points chacun
+- Plus de 3 additifs au total = SCORE MAX 45/100
+`;
+  }
+
+  if (profile.avoidPalmOil) {
+    profileInstructions += `
+🚨 ÉVITER L'HUILE DE PALME DEMANDÉ :
+- Huile de palme détectée = -40 points (au lieu de -12)
+- SCORE MAX 35/100 si huile de palme présente
+`;
+  }
+
+ // 🔥 PROMPT FINAL ULTRA-PERSONNALISÉ
+  return `Tu es un expert en nutrition certifié (OMS, EFSA, ANSES). Analyse cette étiquette avec RIGUEUR ABSOLUE.
+
+${profileInstructions}
+
+📋 MÉTHODOLOGIE D'ANALYSE STRICTE :
+
+1️⃣ EXTRACTION COMPLÈTE DU TEXTE
+- Tu DOIS extraire TOUS les ingrédients visibles sur l'image
+- Recopie EXACTEMENT le texte de la liste des ingrédients
+- Si l'image est floue ou illisible, écris "Image non lisible - veuillez reprendre une photo nette"
+- Le champ "extractedText" DOIT contenir la liste complète des ingrédients séparés par des virgules
+
+2️⃣ SYSTÈME DE NOTATION PERSONNALISÉ (0-100)
+
+${scoringAdjustments}
+
+DÉDUCTIONS STANDARDS (si non surchargées) :
+🔴 Additifs controversés (E621, E330, E951) : -8 à -15 points CHACUN
+🔴 Huile de palme : -12 points (sauf si éviter demandé)
+🔴 Sucres ajoutés >10g/100g : -15 points
+🔴 Sel >1.5g/100g : -10 points
+🔴 Allergènes : -5 points chacun (sauf si allergie déclarée)
 
 BONUS POSITIFS :
 🟢 Bio certifié : +15 points
 🟢 Sans additifs : +10 points
 🟢 Fibres >5g/100g : +8 points
-🟢 Protéines >10g/100g : +5 points
-🟢 Ingrédients 100% naturels : +12 points
-🟢 Faible en sel (<0.3g/100g) : +5 points
+🟢 Ingrédients naturels : +12 points
 
-3️⃣ GRADING RIGOUREUX (type Nutri-Score/Yuka)
-- A (90-100) : EXCELLENT - Produit sain, recommandé
-- B (75-89)  : BON - Qualité correcte, consommation modérée OK
-- C (50-74)  : MOYEN - Attention aux excès, limiter la fréquence
-- D (25-49)  : MÉDIOCRE - À éviter régulièrement, risques santé
-- E (0-24)   : MAUVAIS - Déconseillé, nombreux additifs/sucres/sel
+3️⃣ RÈGLES CRITIQUES OBLIGATOIRES :
+
+${criticalRules}
 
 4️⃣ CATÉGORISATION DES INGRÉDIENTS
 
-Pour CHAQUE ingrédient détecté, précise :
-- name: Nom exact tel qu'écrit sur l'étiquette
-- category: 
-  * "ultra_processed" (sirop glucose-fructose, maltodextrine, protéines hydrolysées)
-  * "additive_harmful" (E621, E951, E150, colorants azoïques)
-  * "additive_safe" (E330 citrate, E440 pectine)
-  * "allergen_major" (gluten, lait, œufs, arachides, soja, fruits à coque)
-  * "allergen_minor" (sulfites, céleri, moutarde)
-  * "sugar_added" (sucre, sirop, dextrose, fructose)
-  * "fat_saturated" (huile palme, graisse hydrogénée, beurre)
-  * "preservative" (E200-E299, benzoate, sorbate)
-  * "sweetener_artificial" (aspartame, acésulfame-K, sucralose)
-  * "natural" (fruits, légumes, céréales complètes)
-  * "beneficial" (fibres, protéines, vitamines, minéraux)
+Pour CHAQUE ingrédient détecté :
+- name: Nom exact de l'ingrédient
+- category: ultra_processed / additive_harmful / allergen_major / sugar_added / fat_saturated / natural / beneficial
+- riskLevel: critical / high / medium / low / none
+- explanation: Impact santé CONCRET avec références OMS (minimum 20 mots)
 
-- riskLevel:
-  * "critical" : Danger santé (E621, huile palme, >30g sucre/100g)
-  * "high" : Risque important (additifs controversés, >20g sucre/100g)
-  * "medium" : Attention requise (>10g sucre/100g, additifs courants)
-  * "low" : Risque faible (additifs naturels, faible dose)
-  * "none" : Aucun risque (ingrédients naturels)
+5️⃣ GRADING STRICT :
+- A (90-100) : EXCELLENT - Recommandé
+- B (75-89)  : BON - Consommation modérée OK
+- C (50-74)  : MOYEN - Limiter la fréquence
+- D (25-49)  : MÉDIOCRE - Déconseillé
+- E (0-24)   : MAUVAIS - Interdit ou fortement déconseillé
 
-- explanation: Explication CONCRÈTE et PÉDAGOGIQUE
-  * Mentionne l'impact santé réel (diabète, hypertension, allergies)
-  * Cite les recommandations OMS si pertinent
-  * Évite le jargon, sois accessible au grand public
+6️⃣ SUMMARY OBLIGATOIRE - 3 SECTIONS REMPLIES
 
-5️⃣ VERDICT ET RECOMMANDATIONS
+Tu DOIS absolument remplir ces 3 sections (JAMAIS vides) :
 
-positives: Liste 2-4 points forts CONCRETS (si existants)
-warnings: Liste TOUS les risques santé identifiés
-recommendations: Conseils pratiques et alternatifs
+📊 "positives" (MINIMUM 2 points) :
+- Exemple : "Contient des ingrédients naturels comme l'eau"
+- Exemple : "Absence d'additifs controversés détectés"
+- Exemple : "Produit à base d'ingrédients simples"
+- Si vraiment RIEN de positif : ["Emballage recyclable (si visible)", "Composition claire et lisible"]
 
-⚠️ RÈGLES CRITIQUES :
-- Un produit avec >20g sucre/100g NE PEUT PAS dépasser 50/100
-- Un produit avec >3 additifs controversés NE PEUT PAS dépasser 40/100
-- Un produit ultra-transformé (>5 additifs) démarre à 60/100 MAX
-- Huile de palme ou graisses hydrogénées = MAX 45/100
-- Présence de E621 (glutamate) = MAX 35/100
+⚠️ "warnings" (MINIMUM 1 point si score < 80) :
+- Exemple : "Présence de sucres ajoutés en quantité importante"
+- Exemple : "Contient des additifs pouvant être problématiques"
+- Si score > 80 et rien à signaler : ["Consommation à intégrer dans une alimentation équilibrée"]
 
-📤 RÉPONDS UNIQUEMENT AVEC CE JSON (sans markdown, sans \`\`\`) :
+💡 "recommendations" (MINIMUM 2 points) :
+- Exemple : "Limiter la consommation à 1-2 fois par semaine"
+- Exemple : "Privilégier des alternatives sans additifs"
+- Exemple : "Vérifier les portions recommandées sur l'emballage"
+- TOUJOURS donner des conseils concrets et actionnables
+
+📤 RÉPONDS UNIQUEMENT EN JSON (sans markdown, sans balises \`\`\`json) :
 
 {
-  "extractedText": "Liste complète des ingrédients lus sur l'étiquette",
+  "extractedText": "Liste COMPLÈTE des ingrédients séparés par virgules (recopie exacte du texte visible)",
   "ingredients": [
     {
-      "name": "Nom exact de l'ingrédient",
-      "category": "ultra_processed",
-      "explanation": "Impact santé concret et recommandations OMS",
-      "riskLevel": "high"
+      "name": "Nom exact",
+      "category": "allergen_major",
+      "explanation": "Impact santé précis avec minimum 20 mots",
+      "riskLevel": "critical"
     }
   ],
-  "score": 25,
-  "grade": "D",
-  "positives": ["Point positif concret 1", "Point positif concret 2"],
-  "warnings": [
-    "⚠️ Forte teneur en sucres ajoutés (25g/100g) - Risque diabète type 2",
-    "⚠️ Présence de E621 (glutamate monosodique) - Additif controversé"
-  ],
-  "recommendations": [
-    "Limiter à 1 portion par semaine maximum",
-    "Alternative : Café noir sans sucre ou café soluble bio sans additifs",
-    "Personnes diabétiques : DÉCONSEILLÉ"
-  ]
+  "score": 65,
+  "grade": "C",
+  "summary": {
+    "positives": [
+      "Point positif 1 concret",
+      "Point positif 2 concret"
+    ],
+    "warnings": [
+      "Avertissement 1 précis",
+      "Avertissement 2 précis"
+    ],
+    "recommendations": [
+      "Recommandation 1 actionnable",
+      "Recommandation 2 actionnable"
+    ]
+  }
 }
 
-💡 EXEMPLES DE NOTATION :
-- Nescafé café soluble sucré (>20g sucre, additifs) : 25-35/100 (Grade D/E)
-- Nutella (huile palme, >50g sucre) : 15-25/100 (Grade E)
-- Coca-Cola (>10g sucre/100ml, E150, acidifiants) : 10-20/100 (Grade E)
-- Compote sans sucre ajouté : 75-85/100 (Grade B)
-- Fruits frais, légumes : 95-100/100 (Grade A)
+⚠️ RÈGLES ABSOLUES :
+- extractedText NE PEUT PAS être vide ou générique ("Liste complète des ingrédients" est INTERDIT)
+- summary.positives DOIT avoir AU MOINS 2 éléments
+- summary.warnings DOIT avoir AU MOINS 1 élément si score < 80
+- summary.recommendations DOIT avoir AU MOINS 2 éléments
+- Allergie déclarée + ingrédient détecté = SCORE FORCÉ à 0/100
+- Régime halal + alcool détecté = SCORE FORCÉ à 0/100
+- Régime vegan + produit animal = SCORE FORCÉ à 0/100
+- Diabète + >15g sucre/100g = SCORE MAX 25/100
 
-Sois IMPLACABLE sur les produits ultra-transformés. La santé publique est en jeu.`;
+🚨 SI L'IMAGE EST FLOUE/ILLISIBLE :
+{
+  "extractedText": "Image non lisible - Impossible de déchiffrer le texte. Veuillez reprendre une photo nette et bien éclairée.",
+  "ingredients": [
+    {
+      "name": "Texte illisible",
+      "category": "other",
+      "explanation": "L'image fournie est trop floue ou mal cadrée pour extraire les ingrédients. Assurez-vous que l'étiquette est bien visible, nette et bien éclairée.",
+      "riskLevel": "none"
+    }
+  ],
+  "score": 50,
+  "grade": "C",
+  "summary": {
+    "positives": [
+      "Aucune analyse possible sans texte lisible"
+    ],
+    "warnings": [
+      "⚠️ Image de mauvaise qualité - Analyse impossible"
+    ],
+    "recommendations": [
+      "Reprenez une photo avec un bon éclairage",
+      "Cadrez uniquement la liste des ingrédients",
+      "Évitez les reflets et assurez-vous que le texte est net"
+    ]
+  }
+}
 
-    console.log("🤖 Envoi à Mistral AI avec prompt renforcé...");
+Sois IMPLACABLE et EXHAUSTIF. La santé et les convictions des utilisateurs sont SACRÉES.`;
+}
+
+
+
+export const analyzeImageService = async (base64Image: string, healthProfile? : any) => {
+  try {
+    // Le Prompt qui fait le travail
+   
+    const prompt = generatePersonalizedPrompt(healthProfile);
+    
+     console.log("🤖 Envoi à Mistral AI avec profil personnalisé...");
+    console.log("👤 Profil utilisateur:", JSON.stringify(healthProfile, null, 2));
+
 
     const chatResponse = await client.chat.complete({
       model,
@@ -203,7 +393,7 @@ Sois IMPLACABLE sur les produits ultra-transformés. La santé publique est en j
         },
       ],
       responseFormat: { type: "json_object" }, // Pour forcer la réponse en JSON
-      temperature: 0.3, // - de créativité pour plus de précision
+      temperature: 0.2, // - de créativité pour plus de précision
     });
 
     //Parse la réponse JSON
@@ -245,13 +435,87 @@ Sois IMPLACABLE sur les produits ultra-transformés. La santé publique est en j
       ];
     }
 
-    if (!parsed.extractedText || parsed.extractedText === "") {
-      console.warn("⚠️ Texte extrait vide");
-      parsed.extractedText = "Texte non lisible sur l'image";
+    // 1. ExtractedText
+    if (!parsed.extractedText || 
+        parsed.extractedText === "" || 
+        parsed.extractedText === "Liste complète des ingrédients" ||
+        parsed.extractedText.length < 10) {
+      console.warn("⚠️ ExtractedText vide ou invalide");
+      parsed.extractedText = "Texte non extrait - L'IA n'a pas pu lire le texte sur l'image. Vérifiez que l'étiquette est bien visible et nette.";
+    }
+
+    // 2. Ingredients
+    if (!parsed.ingredients || parsed.ingredients.length === 0) {
+      console.warn("⚠️ Aucun ingrédient trouvé");
+      parsed.ingredients = [
+        {
+          name: "Ingrédients non détectés",
+          category: "other",
+          explanation: "L'IA n'a pas pu extraire les ingrédients de l'image. Assurez-vous que la photo est nette, bien éclairée et que la liste des ingrédients est clairement visible.",
+          riskLevel: "none",
+        },
+      ];
+    }
+
+    // 3. Score et Grade
+    if (typeof parsed.score !== "number" || parsed.score < 0 || parsed.score > 100) {
+      console.warn("⚠️ Score invalide:", parsed.score);
+      parsed.score = 50;
+    }
+
+    if (!parsed.grade || !["A", "B", "C", "D", "E"].includes(parsed.grade)) {
+      console.warn("⚠️ Grade invalide:", parsed.grade);
+      parsed.grade = "C";
+    }
+
+    // 4. Summary - CORRECTION CRITIQUE
+    if (!parsed.summary || typeof parsed.summary !== 'object') {
+      console.warn("⚠️ Summary manquant ou invalide");
+      parsed.summary = {
+        positives: ["Analyse effectuée avec succès"],
+        warnings: ["Impossible d'extraire des détails précis - Image de mauvaise qualité"],
+        recommendations: [
+          "Reprenez une photo plus nette de l'étiquette",
+          "Assurez-vous d'un bon éclairage sans reflets"
+        ],
+      };
+    }
+
+    // 5. Validation des 3 tableaux du summary
+    if (!Array.isArray(parsed.summary.positives) || parsed.summary.positives.length === 0) {
+      console.warn("⚠️ summary.positives vide ou invalide");
+      parsed.summary.positives = [
+        "Aucun point positif identifié suite à l'analyse",
+        "Produit analysable mais nécessite une meilleure image pour plus de détails"
+      ];
+    }
+
+    if (!Array.isArray(parsed.summary.warnings) || parsed.summary.warnings.length === 0) {
+      console.warn("⚠️ summary.warnings vide ou invalide");
+      if (parsed.score < 80) {
+        parsed.summary.warnings = [
+          "Score nutritionnel inférieur à 80/100",
+          "Présence probable d'ingrédients à consommer avec modération"
+        ];
+      } else {
+        parsed.summary.warnings = [
+          "Produit acceptable mais toujours à consommer dans le cadre d'une alimentation équilibrée"
+        ];
+      }
+    }
+
+    if (!Array.isArray(parsed.summary.recommendations) || parsed.summary.recommendations.length === 0) {
+      console.warn("⚠️ summary.recommendations vide ou invalide");
+      parsed.summary.recommendations = [
+        "Respectez les portions recommandées sur l'emballage",
+        "Intégrez ce produit dans une alimentation variée et équilibrée",
+        "Consultez un professionnel de santé pour des conseils personnalisés"
+      ];
     }
 
     // Transformer au format attendu
     const result = {
+      success: true,
       extractedText: parsed.extractedText || "Texte non disponible",
       analysis: {
         ingredients: parsed.ingredients.map((ing: any) => ({
@@ -263,16 +527,14 @@ Sois IMPLACABLE sur les produits ultra-transformés. La santé publique est en j
         score: typeof parsed.score === "number" ? parsed.score : 50,
         grade: parsed.grade || "C",
         summary: {
-          positives: Array.isArray(parsed.positives)
-            ? parsed.positives
-            : ["Aucun point positif identifié"],
-          warnings: Array.isArray(parsed.warnings)
-            ? parsed.warnings
-            : ["Aucun avertissement"],
-          recommendations: Array.isArray(parsed.recommendations)
-            ? parsed.recommendations
-            : ["Consultez un professionnel de santé"],
+          positives: parsed.summary.positives || [],
+                 warnings: parsed.summary.warnings || [],
+                 recommendations: parsed.summary.recommendations || [],
         },
+        // ✅ AJOUTER les nouvelles propriétés pour les alertes personnalisées
+        personalizedWarnings: parsed.summary.warnings || [],
+        suitabilityScore: parsed.score || 50,
+        profileRecommendation: parsed.summary.recommendations?.join(" ") || "",
       },
     };
 
