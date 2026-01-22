@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ImageUploadProps {
   onImageSelect: (file: File, preview: string) => void;
@@ -16,12 +16,36 @@ export function ImageUpload({ onImageSelect, isLoading }: ImageUploadProps) {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
 
+  // ✅ Fonction pour arrêter la caméra (déclarée avant useEffect)
+  const stopCamera = useCallback(() => {
+    console.log("⏹️ Arrêt de la caméra");
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        console.log("🛑 Track arrêté:", track.kind);
+      });
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.onloadedmetadata = null;
+      videoRef.current.onerror = null;
+    }
+
+    setShowCamera(false);
+    setIsVideoReady(false);
+    setCameraError(null);
+  }, []);
+
   // Nettoyer le stream vidéo quand le composant est démonté
   useEffect(() => {
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
+
   // ✅ NOUVELLE FONCTION : Créer une preview depuis un File
   const createImagePreview = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -167,28 +191,6 @@ export function ImageUpload({ onImageSelect, isLoading }: ImageUploadProps) {
         setCameraError("Une erreur est survenue lors de l'accès à la caméra.");
       }
     }
-  };
-
-  const stopCamera = () => {
-    console.log("⏹️ Arrêt de la caméra");
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => {
-        track.stop();
-        console.log("🛑 Track arrêté:", track.kind);
-      });
-      streamRef.current = null;
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-      videoRef.current.onloadedmetadata = null;
-      videoRef.current.onerror = null;
-    }
-
-    setShowCamera(false);
-    setIsVideoReady(false);
-    setCameraError(null);
   };
 
   const capturePhoto = async () => {
