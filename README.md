@@ -74,7 +74,6 @@ Dans un monde où la transparence alimentaire devient cruciale, **Analyseur d'In
   - ⚖️ **Profil obésité** : Focus sur les calories et graisses (>400 kcal = -20 points)
   - 🌾 **Allergies** : Score forcé à 0/100 si allergène détecté
   - 🌱 **Régimes** : Vegan, végétarien, halal, casher, sans gluten
-  
 - **Grades A-E dynamiques** : Système inspiré du Nutri-Score mais personnalisé
   - 🟢 **A (90-100)** : EXCELLENT - Produit sain recommandé pour VOUS
   - 🟢 **B (75-89)** : BON - Qualité correcte selon votre profil
@@ -130,7 +129,9 @@ Dans un monde où la transparence alimentaire devient cruciale, **Analyseur d'In
 
 Avant de commencer, assurez-vous d'avoir installé :
 
-- **Node.js** : Version 18+ ([Télécharger](https://nodejs.org/))
+- **Node.js** : Version 18+ ([Télécharger](https://nodejs.org/))  
+  **testé et approuvé avec NODE V.22.12.0**
+  Nous avons utilisé des versions Node entre les v.22.12.0 et 23.3.0.
 - **npm** : Inclus avec Node.js
 - **Une clé API Mistral** : [Créer un compte](https://console.mistral.ai/)
 
@@ -286,7 +287,7 @@ Dans votre terminal, Vite affichera **2 adresses** : (c'est un exemple)
 
 ```bash
   ➜  Local:   http://localhost:5173/
-  ➜  Network: http://192.168.1.114:5173/  👈 C'est celle-ci ! 
+  ➜  Network: http://192.168.1.114:5173/  👈 C'est celle-ci !
 ```
 
 📝 **Note** : L'adresse Network correspond à l'IP locale de votre ordinateur sur le réseau WiFi
@@ -456,43 +457,45 @@ projet-web-ia/
 ## 📂 Structure du Projet
 
 ```
+
 projet-web-ia/
-├── 📁 client/                 # Application React (Frontend)
-│   ├── src/
-│   │   ├── components/        # Composants React
-│   │   │   ├── ImageUpload.tsx      # Capture photo/upload
-│   │   │   ├── AnalysisResults.tsx  # Affichage résultats
-│   │   │   ├── History.tsx          # Historique analyses
-│   │   │   └── Help.tsx             # Aide utilisateur
-│   │   ├── services/          # Services API
-│   │   │   ├── api.ts               # Communication backend
-│   │   │   ├── analyzeController.ts
-│   │   │   └── __tests__/           # Tests unitaires
-│   │   ├── services/          # Services externes
-│   │   │   ├── mistralService.ts    # 🧠 IA + prompts personnalisés
-│   │   │   └── __tests__/           # Tests Mistral AI
-│   │   ├── routes/            # Routes API
-│   │   │   ├── api.ts
-│   │   │   └── __tests__/           # Tests routes
-│   │   └── index.ts           # Serveur Express
-│   ├── uploads/              # 📸 Images temporaires
-│   ├── .env                  # ⚙️ Config backend (clé API)
-│   ├── jest.config.js        # 🧪 Configuration tests
-│   ├── src/
-│   │   ├── controllers/       # Logique métier
-│   │   │   └── analyzeController.ts
-│   │   ├── services/          # Services externes
-│   │   │   └── mistralService.ts    # Intégration Mistral AI
-│   │   ├── routes/            # Routes API
-│   │   │   └── api.ts
-│   │   └── index.ts           # Serveur Express
-│   ├── uploads/              # 📸 Images temporaires
-│   ├── .env                  # ⚙️ Config backend (clé API)
-│   └── package.json
+├── 📁 client/ # Application React (Frontend)
+│ ├── src/
+│ │ ├── components/ # Composants React
+│ │ │ ├── ImageUpload.tsx # Capture photo/upload
+│ │ │ ├── AnalysisResults.tsx # Affichage résultats
+│ │ │ ├── History.tsx # Historique analyses
+│ │ │ └── Help.tsx # Aide utilisateur
+│ │ ├── services/ # Services API
+│ │ │ ├── api.ts # Communication backend
+│ │ │ ├── analyzeController.ts
+│ │ │ └── **tests**/ # Tests unitaires
+│ │ ├── services/ # Services externes
+│ │ │ ├── mistralService.ts # 🧠 IA + prompts personnalisés
+│ │ │ └── **tests**/ # Tests Mistral AI
+│ │ ├── routes/ # Routes API
+│ │ │ ├── api.ts
+│ │ │ └── **tests**/ # Tests routes
+│ │ └── index.ts # Serveur Express
+│ ├── uploads/ # 📸 Images temporaires
+│ ├── .env # ⚙️ Config backend (clé API)
+│ ├── jest.config.js # 🧪 Configuration tests
+│ ├── src/
+│ │ ├── controllers/ # Logique métier
+│ │ │ └── analyzeController.ts
+│ │ ├── services/ # Services externes
+│ │ │ └── mistralService.ts # Intégration Mistral AI
+│ │ ├── routes/ # Routes API
+│ │ │ └── api.ts
+│ │ └── index.ts # Serveur Express
+│ ├── uploads/ # 📸 Images temporaires
+│ ├── .env # ⚙️ Config backend (clé API)
+│ └── package.json
 │
-├── package.json              # Scripts racine
-└── README.md                 # 📖 Ce fichier
-```
+├── package.json # Scripts racine
+└── README.md # 📖 Ce fichier
+
+````
 
 ---
 
@@ -510,7 +513,7 @@ rm -rf node_modules client/node_modules server/node_modules
 
 # 📦 Réinstaller toutes les dépendances
 npm install && cd client && npm install && cd ../server && npm install
-```
+````
 
 ---
 
@@ -564,6 +567,7 @@ Projet réalisé par **Farid, Mody, Loris, Redjane ** en Master 2 dans le cadre 
 ---
 
 ## 📝 Licence
+
 🎯 Utilisation des Profils de Santé
 
 ### 📝 Configuration de votre profil
@@ -594,13 +598,13 @@ Lorsque vous analysez un produit :
 
 **Produit** : Yaourt aux fruits (15g sucre/100g)
 
-| Profil                  | Score  | Grade | Commentaire                                |
-| ----------------------- | ------ | ----- | ------------------------------------------ |
-| 👤 Aucun profil         | 65/100 | C     | ✅ Consommation modérée                    |
-| 🩺 Diabétique           | 25/100 | E     | ⛔ INTERDIT - Risque hyperglycémie         |
-| 💉 Hypertendu           | 70/100 | C     | ✅ OK (peu de sel)                         |
-| 🌾 Allergique lactose   | 0/100  | E     | ⛔ ALLERGÈNE MAJEUR - Produit interdit     |
-| 🌱 Vegan                | 0/100  | E     | ⛔ NON-VEGAN - Contient lait               |
+| Profil                | Score  | Grade | Commentaire                            |
+| --------------------- | ------ | ----- | -------------------------------------- |
+| 👤 Aucun profil       | 65/100 | C     | ✅ Consommation modérée                |
+| 🩺 Diabétique         | 25/100 | E     | ⛔ INTERDIT - Risque hyperglycémie     |
+| 💉 Hypertendu         | 70/100 | C     | ✅ OK (peu de sel)                     |
+| 🌾 Allergique lactose | 0/100  | E     | ⛔ ALLERGÈNE MAJEUR - Produit interdit |
+| 🌱 Vegan              | 0/100  | E     | ⛔ NON-VEGAN - Contient lait           |
 
 ## 🧪 Tests & Qualité
 
@@ -616,6 +620,7 @@ npm run test:coverage
 ```
 
 **Coverage actuel** : 68.42%
+
 - Routes : 100%
 - Controllers : 94.11%
 - Services : 51.92%
