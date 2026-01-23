@@ -182,7 +182,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-yellow-400 to-amber-400 pb-24 md:pb-0 safe-area-top safe-area-bottom">
   
       {/* Navigation mobile fixe en bas - cachée quand modal profil ouverte */}
-+      <nav className={`fixed bottom-0 left-0 right-0 z-50 safe-area-bottom md:hidden ${profileModalOpen ? 'hidden' : ''}`}>
+      <nav className={`fixed bottom-0 left-0 right-0 z-50 safe-area-bottom md:hidden ${profileModalOpen ? 'hidden' : ''}`}>
       
         <div className="grid grid-cols-2 h-24 bg-black/40 backdrop-blur-xl">
           <button

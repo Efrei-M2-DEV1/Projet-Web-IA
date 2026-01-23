@@ -284,7 +284,7 @@ export function ImageUpload({ onImageSelect, isLoading }: ImageUploadProps) {
         <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-6 md:p-12">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 via-yellow-500 to-amber-500 rounded-full mb-4 shadow-lg">
-              <span className="text-4xl">📸</span>
+              <span className="text-4xl" style={{marginTop: "-14px"}}>📸</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
               Analysez vos produits
