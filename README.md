@@ -139,7 +139,7 @@ Avant de commencer, assurez-vous d'avoir installé :
 
 ```bash
 # 1️⃣ Cloner le projet
-git clone <votre-repo>
+git clone https://github.com/Efrei-M2-DEV1/Projet-Web-IA.git
 cd projet-web-ia
 
 # 2️⃣ Installer les dépendances
