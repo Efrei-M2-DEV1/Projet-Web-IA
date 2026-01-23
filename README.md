@@ -129,10 +129,10 @@ Dans un monde où la transparence alimentaire devient cruciale, **Analyseur d'In
 
 Avant de commencer, assurez-vous d'avoir installé :
 
-- **Node.js** : Version 18+ ([Télécharger](https://nodejs.org/))  
-  **testé et approuvé avec NODE V.22.12.0**
-  Nous avons utilisé des versions Node entre les v.22.12.0 et 23.3.0.
-- **npm** : Inclus avec Node.js
+- **Node.js** : Utilisation de la dernière version LTS (Long Term Support), garantissant stabilité et support à long terme. Les développements ont été réalisés et validés avec Node.js v22.12.0 (LTS).
+
+- **npm** : Gestionnaire de paquets inclus avec Node.js, utilisé dans sa dernière version LTS (v11.8.0) afin d'assurer la compatibilité et la fiabilité des dépendances du projet.
+
 - **Une clé API Mistral** : [Créer un compte](https://console.mistral.ai/)
 
 ### 🔧 Installation
