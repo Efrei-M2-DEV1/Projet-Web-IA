@@ -2,7 +2,13 @@
 
 Application web responsive React pour analyser les ingrédients de produits alimentaires, cosmétiques et d'hygiène via l'intelligence artificielle.
 
-## 🚀 Fonctionnalités
+## � Prérequis
+
+- **Node.js** : Utilisation de la dernière version LTS (Long Term Support), garantissant stabilité et support à long terme. Les développements ont été réalisés et validés avec Node.js v22.12.0 (LTS).
+
+- **npm** : Gestionnaire de paquets inclus avec Node.js, utilisé dans sa dernière version LTS (v11.8.0) afin d'assurer la compatibilité et la fiabilité des dépendances du projet.
+
+## �🚀 Fonctionnalités
 
 - **Capture/Upload d'images** : Glisser-déposer ou sélectionner une image d'étiquette produit
 - **Extraction OCR** : Reconnaissance automatique du texte sur l'étiquette
